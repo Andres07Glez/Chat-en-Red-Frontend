@@ -1,4 +1,18 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
 
+    /* Aquí movemos tu fondo y efectos */
+    background: linear-gradient(135deg, #000000, #000000, #000000);
+    overflow: hidden;
+    perspective: 1000px;
+
+    /* Aseguramos que se posicione sobre todo */
+    position: relative;
+}
 
 #particles-js {
     position: fixed; /* Importante: fixed, no absolute, para que no se mueva al hacer scroll */
