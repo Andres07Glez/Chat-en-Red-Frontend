@@ -1,1 +1,113 @@
-<p>login-page works!</p>
+<div id="particles-js"></div>
+
+<div class="container" [class.blur-background]="showRegisterModal">
+    <div class="form-box">
+        <h2>Login</h2>
+        <p>Welcome Back</p>
+
+        <div *ngIf="errorMessage && !showRegisterModal" class="error-msg">
+            {{ errorMessage }}
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="input-group">
+                <input type="text" id="username" formControlName="username" required class="input-field">
+                <label for="username">Username</label>
+                <div class="glow-line"></div>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="password" formControlName="password" required class="input-field">
+                <label for="password">Password</label>
+                <div class="glow-line"></div>
+            </div>
+
+            <div class="remember-forgot">
+                <div class="remember">
+                    <input type="checkbox" id="remember" formControlName="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+                <a href="#" class="forgot">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="login-btn" [disabled]="isLoading">
+                <span>{{ isLoading ? 'LOADING...' : 'SIGN IN' }}</span>
+                <div class="btn-glow"></div>
+            </button>
+
+            <div class="signup-link">
+                Don't have an account? <a type="button" (click)="openRegisterModal()" style="cursor: pointer;">Register</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showRegisterModal" (click)="closeRegisterModal()">
+    <div class="form-box modal-content" (click)="$event.stopPropagation()">
+        <span class="close-btn" (click)="closeRegisterModal()">&times;</span>
+
+        <h2>Sign Up</h2>
+        <p>Join the Network</p>
+
+        <div *ngIf="registerError" class="error-msg">
+            {{ registerError }}
+        </div>
+        <div *ngIf="registerSuccess" class="success-msg">
+            {{ registerSuccess }}
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+
+            <div class="input-group">
+                <input type="text" id="reg-username" formControlName="username" required class="input-field">
+                <label for="reg-username">Username</label>
+                <div class="glow-line"></div>
+            </div>
+            <div *ngIf="registerForm.get('username')?.invalid && (registerForm.get('username')?.dirty || registerForm.get('username')?.touched)">
+                <small class="validation-error" *ngIf="registerForm.get('username')?.hasError('required')">
+                    El usuario es requerido.
+                </small>
+                <small class="validation-error" *ngIf="registerForm.get('username')?.hasError('minlength')">
+                    Mínimo 3 caracteres.
+                </small>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="reg-email" formControlName="email" required class="input-field">
+                <label for="reg-email">Email Address</label>
+                <div class="glow-line"></div>
+            </div>
+            <div *ngIf="registerForm.get('email')?.invalid && (registerForm.get('email')?.dirty || registerForm.get('email')?.touched)">
+                <small class="validation-error" *ngIf="registerForm.get('email')?.hasError('required')">
+                    El correo es requerido.
+                </small>
+                <small class="validation-error" *ngIf="registerForm.get('email')?.hasError('email')">
+                    Formato de correo inválido (ej. a@a.com).
+                </small>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="reg-password" formControlName="password" required class="input-field">
+                <label for="reg-password">Password</label>
+                <div class="glow-line"></div>
+            </div>
+            <div *ngIf="registerForm.get('password')?.invalid && (registerForm.get('password')?.dirty || registerForm.get('password')?.touched)">
+                <small class="validation-error" *ngIf="registerForm.get('password')?.hasError('required')">
+                    La contraseña es requerida.
+                </small>
+                <small class="validation-error" *ngIf="registerForm.get('password')?.hasError('minlength')">
+                    La contraseña debe tener al menos 6 caracteres.
+                </small>
+            </div>
+
+            <button type="submit" class="login-btn" [disabled]="isLoading">
+                <span>{{ isLoading ? 'PROCESSING...' : 'REGISTER' }}</span>
+                <div class="btn-glow"></div>
+            </button>
+        </form>
+
+        <div class="signup-link">
+            Already have an account? <a type="button" (click)="closeRegisterModal()">Log In</a>
+        </div>
+    </div>
+</div>

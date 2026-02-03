@@ -1,3 +1,16 @@
-/* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui";  /* <--- ESTA LÍNEA ES OBLIGATORIA EN V4 */
+
+/* Tus configuraciones globales */
+@theme {
+  --font-sans: 'Poppins', sans-serif;
+}
+
+/* El reset para tu Login */
+:root {
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+}
