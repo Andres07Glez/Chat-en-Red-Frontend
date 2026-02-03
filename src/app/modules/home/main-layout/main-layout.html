@@ -1,0 +1,35 @@
+<div class="flex h-screen w-full overflow-hidden bg-base-100">
+
+    <aside class="w-[70px] flex-none z-20 shadow-lg">
+        <app-menu-bar
+            (perfilToggled)="handleProfileToggle($event)"
+            (onChatsClick)="openChatList()">
+        </app-menu-bar>
+    </aside>
+
+    <aside class="w-[350px] flex-none border-r border-base-300 flex flex-col">
+
+        <app-chat-list
+            *ngIf="!showProfilePanel"
+            class="h-full">
+        </app-chat-list>
+
+        <app-profile-sidebar
+            *ngIf="showProfilePanel"
+            (closeProfile)="openChatList()"
+            class="h-full">
+        </app-profile-sidebar>
+
+    </aside>
+
+    <main class="flex-1 relative flex flex-col min-w-0">
+        <ng-container *ngIf="chatState.selectedChat() as chat">
+             <div class="p-10 text-center text-base-content">Chat con {{chat.name}}</div>
+         </ng-container>
+
+         <div *ngIf="!chatState.selectedChat()" class="flex h-full items-center justify-center text-base-content/50">
+            <p>Selecciona un chat</p>
+         </div>
+    </main>
+
+</div>
