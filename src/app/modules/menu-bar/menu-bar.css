@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Transiciones suaves */
+.aside-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Mejoras para accesibilidad */
+button:focus-visible {
+  outline: 2px solid hsl(var(--p));
+  outline-offset: 2px;
+}
+
+/* Scroll personalizado para el panel de perfil */
+.perfil-panel {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.perfil-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.perfil-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.perfil-panel::-webkit-scrollbar-thumb {
+  background: hsl(var(--bc) / 0.2);
+  border-radius: 3px;
+}
+
+.perfil-panel::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--bc) / 0.3);
+}

@@ -1,87 +1,62 @@
-<div class="flex h-screen bg-base-200">
+<!-- Este componente solo contiene la barra lateral de iconos -->
+<aside class="flex h-full w-16 bg-base-100 border-r border-base-300 flex-col items-center py-4">
+  <!-- MENÚ -->
+  <ul class="menu menu-vertical flex items-center gap-3">
+    <li>
+      <button
+        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        data-tip="Chats"
+        aria-label="Chats"
+        (click)="onChatsClick.emit()"
+      >
+        <img src="icons/chats.png" class="w-6 md:w-8" alt="Chats">
+      </button>
+    </li>
 
-  <!-- SIDEBAR -->
-  <aside
-    class="hidden md:flex w-16 bg-base-100 border-r border-base-300 flex-col items-center py-4"
+    <li>
+      <button
+        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        data-tip="Solicitudes"
+        aria-label="Solicitudes"
+      >
+        <img src="icons/grupos.png" class="w-6 md:w-8" alt="Solicitudes">
+      </button>
+    </li>
+
+    <li>
+      <button
+        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        data-tip="Contactos"
+        aria-label="Contactos"
+      >
+        <img src="icons/contactos.png" class="w-6 md:w-8" alt="Contactos">
+      </button>
+    </li>
+  </ul>
+
+  <!-- ESPACIADOR -->
+  <div class="flex-1"></div>
+
+  <!-- CONFIGURACIÓN -->
+  <button 
+    class="flex items-center justify-center mb-6 btn btn-ghost btn-circle tooltip tooltip-right" 
+    data-tip="Ajustes"
+    aria-label="Ajustes"
   >
+    <img src="icons/ajustes.png" class="w-6 md:w-8" alt="Ajustes">
+  </button>
 
-    <!-- MENÚ -->
-    <ul class="menu menu-vertical flex items-center gap-3">
-      <li>
-        <button
-          class="flex items-center justify-center tooltip tooltip-right"
-          data-tip="Chats" 
-        >
-          <img src="icons/chat.png" class="w-8 md:w-9" alt="Chats">
-        </button>
-      </li>
-
-      <li>
-        <button
-          class="flex items-center justify-center tooltip tooltip-right"
-          data-tip="Grupos"
-        >
-          <img src="icons/grupo.png" class="w-8 md:w-9" alt="Grupos">
-        </button>
-      </li>
-
-      <li>
-        <button
-          class="flex items-center justify-center tooltip tooltip-right"
-          data-tip="Contactos"
-        >
-          <img src="icons/contactos.png" class="w-8 md:w-9"  alt="Contactos">
-        </button>
-      </li>
-    </ul>
-
-    <!-- ESPACIADOR -->
-    <div class="flex-1"></div>
-
-    <!-- CONFIGURACIÓN -->
-    <button class="flex items-center justify-center mb-6 tooltip tooltip-right" data-tip="Ajustes">
-      <img src="icons/confi.png" class="w-8" alt="Ajustes">
-    </button>
-
-    <!-- PERFIL -->
-    <button
-      (click)="togglePerfil()"
-      class="flex flex-col items-center mb-6 focus:outline-none"
-    >
-      <div class="avatar online">
-        <div class="w-10 rounded-full">
-          <img src="icons/perfil.jpeg" alt="Perfil usuario" />
-        </div>
+  <!-- PERFIL -->
+  <button
+    (click)="togglePerfil()"
+    class="perfil-button flex flex-col items-center mb-6 focus:outline-none btn btn-ghost btn-circle"
+    aria-label="Abrir perfil"
+    [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
+  >
+    <div class="avatar online">
+      <div class="w-8 md:w-10 rounded-full">
+        <img src="icons/perfil.jpeg" alt="Perfil usuario">
       </div>
-    </button>
-
-  </aside>
-
-  <!-- PANEL PERFIL -->
-   <!--<section *ngIf="perfilAbierto" class="hidden lg:block w-80 bg-base-100 border-r border-base-300 p-6"> 
-   -->
-
-  <section class="hidden lg:block w-80 bg-base-100 border-r border-base-300 p-6">
-    <h2 class="text-lg font-bold mb-4">Perfil</h2>
-
-    <div class="flex flex-col items-center gap-4">
-      <div class="avatar">
-        <div class="w-24 rounded-full">
-          <img src="icons/perfil.jpeg" alt="Foto de perfil">
-        </div>
-      </div>
-
-      <p class="font-medium">Nombre de usuario</p>
     </div>
-  </section>
-
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 p-4 md:p-6 overflow-hidden">
-    <div class="h-full bg-base-100 rounded-lg shadow flex items-center justify-center">
-      <p class="text-lg opacity-70">
-        Contenido principal
-      </p>
-    </div>
-  </main>
-
-</div>
+  </button>
+</aside>
