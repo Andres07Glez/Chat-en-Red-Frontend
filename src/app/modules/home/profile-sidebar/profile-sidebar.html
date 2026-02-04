@@ -1,0 +1,47 @@
+<div class="h-full bg-base-100 flex flex-col border-r border-base-300">
+
+  <div class="p-4 flex items-center justify-between bg-base-200/50">
+    <h2 class="text-xl font-bold text-base-content">Perfil</h2>
+    <button (click)="onClose()" class="btn btn-ghost btn-sm btn-circle text-base-content">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+    <div class="flex flex-col items-center gap-4">
+
+      <div class="avatar online">
+        <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-3xl font-bold">
+                {{ currentUser?.username?.charAt(0)?.toUpperCase() }}
+            </div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <p class="font-bold text-xl text-base-content">{{ currentUser?.username }}</p>
+        <p class="text-sm text-base-content/60">{{ currentUser?.email }}</p>
+        <span class="badge badge-success badge-sm mt-2">En línea</span>
+      </div>
+
+      <div class="w-full mt-6 space-y-4 bg-base-200 p-4 rounded-box">
+        <div class="text-sm">
+          <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Estado</p>
+          <p class="font-medium">Programando en Angular 🚀</p>
+        </div>
+        <div class="text-sm">
+          <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Miembro desde</p>
+          <p class="font-medium">Noviembre 2025</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col w-full gap-2 mt-8">
+        <button class="btn btn-outline btn-primary btn-sm">Editar perfil</button>
+        <button (click)="logout()" class="btn btn-error btn-outline btn-sm mt-4">
+            Cerrar sesión
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

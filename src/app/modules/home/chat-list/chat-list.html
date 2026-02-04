@@ -12,14 +12,7 @@
                 </svg>
             </button>
 
-            <button class="btn btn-ghost btn-circle btn-sm text-base-content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-            </button>
             </div>
-        <div class="avatar online cursor-pointer placeholder">
-            <div class="bg-neutral text-neutral-content rounded-full w-10">
-                <span class="text-xl">Y</span> </div>
-        </div>
 
         <div class="flex gap-2">
             <button class="btn btn-ghost btn-circle btn-sm text-base-content">
@@ -54,9 +47,9 @@
              [class.bg-base-200]="selectedChatId === chat.id"
              [class.border-l-4]="selectedChatId === chat.id"
              [class.border-l-primary]="selectedChatId === chat.id"> <div class="avatar placeholder">
-                <div class="rounded-full w-12 text-neutral-content shadow-sm"
+                <div class="rounded-full w-12 text-neutral-content shadow-sm flex items-center justify-center"
                      [ngClass]="chat.isGroup ? 'bg-secondary text-secondary-content' : 'bg-neutral'">
-                    <span class="text-lg font-bold">{{ chat.name.charAt(0).toUpperCase() }}</span>
+                    <span class="text-lg font-bold pb-1">{{ chat.name.charAt(0).toUpperCase() }}</span>
                 </div>
             </div>
 

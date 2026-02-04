@@ -3,6 +3,7 @@ import { environment } from '../../../config/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatListItem } from '../../models/chatsList.model';
+import { MessageResponse } from '../../models/message.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,5 +19,11 @@ export class ChatsService {
   getMyChats(): Observable<ChatListItem[]> {
     return this.http.get<ChatListItem[]>(this.apiUrl);
   }
+  getMessages(conversationId: number): Observable<MessageResponse[]> {
+    return this.http.get<MessageResponse[]>(`${environment.baseUrl}/messages/${conversationId}`);
+  }
+  sendMessage(request: any): Observable<MessageResponse> {
+  return this.http.post<MessageResponse>(`${environment.baseUrl}/messages`, request);
+}
 
 }
