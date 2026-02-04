@@ -4,6 +4,7 @@ import { ChatListItem } from '../../../core/models/chatsList.model';
 import { MessageResponse } from '../../../core/models/message.model';
 import { ChatsService } from '../../../core/services/chats/chats.service';
 import { FormsModule } from '@angular/forms';
+import { ChatStateService } from '../../../core/services/chats/chat-state.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -16,6 +17,8 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
   @Input() chatData!: ChatListItem; // Recibimos el chat seleccionado del padre
 
   private chatService = inject(ChatsService);
+  private chatState = inject(ChatStateService);
+
   newMessageText: string = ''; // Variable vinculada al input
   isSending = false;
 
@@ -77,13 +80,12 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
       next: (msgResponse) => {
         // 1. Agregamos el mensaje a la lista visualmente
         this.messages.push(msgResponse);
-
         // 2. Limpiamos el input
         this.newMessageText = '';
         this.isSending = false;
-
         // 3. Scroll al final
         setTimeout(() => this.scrollToBottom(), 50);
+        this.chatState.triggerRefresh();
       },
       error: (err) => {
         console.error('Error enviando mensaje', err);

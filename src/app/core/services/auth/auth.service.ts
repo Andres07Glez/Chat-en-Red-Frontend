@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../config/environment';
 import { Observable, tap } from 'rxjs';
 import { JwtResponse, LoginRequest, SignupRequest } from '../../models/auth.models';
+import { Router } from '@angular/router';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -15,6 +16,7 @@ export class AuthService {
   private baseUrl=environment.baseUrl+'/auth/'; //  baseUrl: 'http://localhost:8181'
 
   private http = inject(HttpClient);
+  private router = inject(Router);
 
   constructor() { }
 
@@ -64,7 +66,8 @@ export class AuthService {
   logout(): void {
     localStorage.clear();
     // Aquí podrías redirigir al login
-    window.location.reload();
+    //window.location.reload();
+    this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
