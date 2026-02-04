@@ -54,9 +54,9 @@
              [class.bg-base-200]="selectedChatId === chat.id"
              [class.border-l-4]="selectedChatId === chat.id"
              [class.border-l-primary]="selectedChatId === chat.id"> <div class="avatar placeholder">
-                <div class="rounded-full w-12 text-neutral-content shadow-sm"
+                <div class="rounded-full w-12 text-neutral-content shadow-sm flex items-center justify-center"
                      [ngClass]="chat.isGroup ? 'bg-secondary text-secondary-content' : 'bg-neutral'">
-                    <span class="text-lg font-bold">{{ chat.name.charAt(0).toUpperCase() }}</span>
+                    <span class="text-lg font-bold pb-1">{{ chat.name.charAt(0).toUpperCase() }}</span>
                 </div>
             </div>
 

@@ -24,7 +24,7 @@
 
     <main class="flex-1 relative flex flex-col min-w-0">
         <ng-container *ngIf="chatState.selectedChat() as chat">
-             <div class="p-10 text-center text-base-content">Chat con {{chat.name}}</div>
+             <app-chat-window [chatData]="chat" class="h-full block"></app-chat-window>
          </ng-container>
 
          <div *ngIf="!chatState.selectedChat()" class="flex h-full items-center justify-center text-base-content/50">

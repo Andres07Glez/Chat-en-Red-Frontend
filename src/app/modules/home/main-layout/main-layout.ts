@@ -4,11 +4,12 @@ import { ChatStateService } from '../../../core/services/chats/chat-state.servic
 import { CommonModule } from '@angular/common';
 import { menubar } from "../menu-bar/menu-bar";
 import { ProfileSidebar } from "../profile-sidebar/profile-sidebar";
+import { ChatWindow } from "../chat-window/chat-window";
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, ChatList, menubar, ProfileSidebar],
+  imports: [CommonModule, ChatList, menubar, ProfileSidebar, ChatWindow],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
