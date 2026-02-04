@@ -1,0 +1,49 @@
+<!-- src/app/components/chat/chat-messages-daisy/chat-messages-daisy.html -->
+<div class="chat-container">
+  <div class="toolbar">
+    <div class="left">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" class="chk" [checked]="allSelected" (change)="toggleSelectAll($event)" />
+        <span>Seleccionar todo</span>
+      </label>
+
+      <button class="btn" [disabled]="selectedCount() === 0" (click)="deleteSelected()">
+        Eliminar seleccionados ({{ selectedCount() }})
+      </button>
+    </div>
+
+    <div class="text-sm opacity-70">Mensajes de ejemplo · <strong>{{ messages.length }}</strong></div>
+  </div>
+
+  <div class="messages-list">
+    <ng-container *ngFor="let m of messages">
+      <div [class.chat-row]="true" [class.mine]="isMine(m)">
+        <div class="avatar">
+          <img [src]="m.avatar" [alt]="m.senderName" />
+        </div>
+
+        <div>
+          <div class="meta">
+            <span>{{ m.senderName }}</span>
+            <span class="time">{{ formatTime(m.createdAt) }}</span>
+          </div>
+
+          <div class="bubble">
+            {{ m.content }}
+            <div *ngIf="m.attachments?.length" class="mt-2 small">
+              <div *ngFor="let a of m.attachments">
+                <a [href]="a.url">{{ a.filename }}</a>
+              </div>
+            </div>
+
+            <button class="del-btn" (click)="deleteMessage(m.id)" title="Eliminar mensaje">🗑</button>
+          </div>
+
+          <div class="small">{{ m.status | titlecase }}</div>
+        </div>
+
+        <div style="width:8px"></div>
+      </div>
+    </ng-container>
+  </div>
+</div>
