@@ -5,6 +5,7 @@ import { MessageResponse } from '../../../core/models/message.model';
 import { ChatsService } from '../../../core/services/chats/chats.service';
 import { FormsModule } from '@angular/forms';
 import { ChatStateService } from '../../../core/services/chats/chat-state.service';
+import { CryptoService } from '../../../core/services/crypto/crypto.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -18,6 +19,7 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
 
   private chatService = inject(ChatsService);
   private chatState = inject(ChatStateService);
+  private cryptoService = inject(CryptoService);
 
   newMessageText: string = ''; // Variable vinculada al input
   isSending = false;
@@ -37,8 +39,18 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
   loadMessages() {
     this.isLoading = true;
     this.chatService.getMessages(this.chatData.id).subscribe({
-      next: (data) => {
-        this.messages = data;
+      next: async (data) => {
+        // DESCIFRADO MASIVO
+        // Procesamos todos los mensajes cifrados
+        const decryptedMessages = await Promise.all(data.map(async (msg) => {
+            // Solo intentamos descifrar si es texto y tiene IV
+            if (msg.messageTypeCode === 'TEXT' && msg.iv) {
+                const plainText = await this.cryptoService.decrypt(msg.content, msg.iv);
+                msg.content = plainText;
+            }
+            return msg;
+        }));
+        this.messages = decryptedMessages;
         this.isLoading = false;
         this.scrollToBottom();
       },
@@ -61,7 +73,7 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
   formatTime(isoDate: string): string {
     return new Date(isoDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  sendMessage() {
+  async sendMessage() {
     if (!this.newMessageText.trim() || !this.chatData) return;
 
     this.isSending = true;
@@ -69,29 +81,39 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
     // PREPARAR REQUEST
     // NOTA: Aquí iría la lógica de ENCRIPTACIÓN en el futuro.
     // Por ahora enviamos texto plano y un IV falso.
-    const request = {
-      conversationId: this.chatData.id,
-      content: this.newMessageText, // <--- AQUÍ CIFRAREMOS DESPUÉS
-      messageTypeCode: 'TEXT',
-      iv: 'temp_iv_' + new Date().getTime() // IV temporal
-    };
+    try{
+      const encryptedData = await this.cryptoService.encrypt(this.newMessageText);
+      const request = {
+        conversationId: this.chatData.id,
+        content: encryptedData.content, // <--- AQUÍ CIFRAREMOS DESPUÉS
+        messageTypeCode: 'TEXT',
+        iv: encryptedData.iv // IV temporal
+      };
 
-    this.chatService.sendMessage(request).subscribe({
-      next: (msgResponse) => {
-        // 1. Agregamos el mensaje a la lista visualmente
-        this.messages.push(msgResponse);
-        // 2. Limpiamos el input
-        this.newMessageText = '';
+      this.chatService.sendMessage(request).subscribe({
+        next: (msgResponse) => {
+          // 1. Agregamos el mensaje a la lista visualmente
+          // Truco visual: El backend devuelve el mensaje cifrado.
+                  // Nosotros ya sabemos qué decía, así que para mostrarlo rápido
+                  // y evitar descifrar lo que acabamos de cifrar:
+          msgResponse.content = this.newMessageText;
+          this.messages.push(msgResponse);
+          // 2. Limpiamos el input
+          this.newMessageText = '';
+          this.isSending = false;
+          // 3. Scroll al final
+          setTimeout(() => this.scrollToBottom(), 50);
+          this.chatState.triggerRefresh();
+        },
+        error: (err) => {
+          console.error('Error enviando mensaje', err);
+          this.isSending = false;
+        }
+      });
+    } catch (error) {
+        console.error('Error de encriptación', error);
         this.isSending = false;
-        // 3. Scroll al final
-        setTimeout(() => this.scrollToBottom(), 50);
-        this.chatState.triggerRefresh();
-      },
-      error: (err) => {
-        console.error('Error enviando mensaje', err);
-        this.isSending = false;
-      }
-    });
+    }
   }
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {

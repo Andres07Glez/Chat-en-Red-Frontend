@@ -1,9 +1,12 @@
 export interface MessageResponse {
     id: number;
+    conversationId: number; // Agregado por si acaso
     content: string;
-    sentAt: string;   // ISO String date
+    sentAt: string;         // Recuerda que en Java usaste @JsonProperty("sentAt")
     senderName: string;
-    isMine: boolean;  // true si lo envié yo
+    messageTypeCode: string; // <--- AQUÍ ESTÁ EL CAMPO FALTANTE
+    isMine: boolean;
+    iv?: string;            // Opcional, necesario para descifrar
 }
 export interface MessageRequest {
   conversationId: number;

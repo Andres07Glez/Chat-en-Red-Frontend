@@ -5,6 +5,7 @@ import { ChatsService } from '../../../core/services/chats/chats.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { ChatStateService } from '../../../core/services/chats/chat-state.service';
 import { Subscription } from 'rxjs';
+import { CryptoService } from '../../../core/services/crypto/crypto.service';
 
 @Component({
   selector: 'app-chat-list',
@@ -14,6 +15,7 @@ import { Subscription } from 'rxjs';
   styleUrl: './chat-list.css',
 })
 export class ChatList implements OnInit,OnDestroy{
+  private cryptoService = inject(CryptoService);
   private chatService = inject(ChatsService);
   public themeService = inject(ThemeService); // Hazlo público para usar en HTML
   private chatState = inject(ChatStateService);
@@ -39,10 +41,27 @@ export class ChatList implements OnInit,OnDestroy{
   }
   refreshChatsSilent() {
     this.chatService.getMyChats().subscribe({
-      next: (data) => {
-        this.chats = data;
-        // Si hay un chat seleccionado, nos aseguramos que siga marcado visualmente
-        // (La lógica de selectedChatId ya lo maneja en el HTML)
+      next: async (data) => {
+
+        // BLOQUE FUTURO SI TRAES IV EN CHATLIST:
+        const decryptedChats = await Promise.all(data.map(async (chat) => {
+            // Solo desciframos si hay mensaje y IV
+            if (chat.lastMessage && chat.lastMessageIV) {
+                try {
+                    const plainText = await this.cryptoService.decrypt(chat.lastMessage, chat.lastMessageIV);
+                    chat.lastMessage = plainText; // Reemplazamos el cifrado por texto plano
+                } catch (error) {
+                    console.error('Error descifrando preview:', error);
+                    chat.lastMessage = ' Mensaje ilegible';
+                }
+            }
+            return chat;
+        }));
+        this.chats = decryptedChats;
+
+
+
+
       },
       error: (err) => console.error(err)
     });
@@ -50,8 +69,23 @@ export class ChatList implements OnInit,OnDestroy{
 
   loadChats() {
     this.chatService.getMyChats().subscribe({
-      next: (data) => {
-        this.chats = data;
+      next: async (data) => {
+        // Procesamos la lista para descifrar el lastMessage
+        // Usamos Promise.all para descifrar todos en paralelo
+        const decryptedChats = await Promise.all(data.map(async (chat) => {
+            // Solo desciframos si hay mensaje y IV
+            if (chat.lastMessage && chat.lastMessageIV) {
+                try {
+                    const plainText = await this.cryptoService.decrypt(chat.lastMessage, chat.lastMessageIV);
+                    chat.lastMessage = plainText; // Reemplazamos el cifrado por texto plano
+                } catch (error) {
+                    console.error('Error descifrando preview:', error);
+                    chat.lastMessage = ' Mensaje ilegible';
+                }
+            }
+            return chat;
+        }));
+        this.chats = decryptedChats;
         this.isLoading = false;
       },
       error: (err) => {

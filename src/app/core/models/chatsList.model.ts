@@ -6,4 +6,5 @@ export interface ChatListItem {
   isGroup: boolean;      // true = Grupo, false = Privado
   unreadCount?: number;  // Opcional
   // avatar?: string;    // (Lo dejaremos pendiente, usaremos uno por defecto)
+  lastMessageIV:string;
 }
