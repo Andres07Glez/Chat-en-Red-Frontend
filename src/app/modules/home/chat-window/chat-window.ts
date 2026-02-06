@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, inject, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, inject, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
 import { ChatListItem } from '../../../core/models/chatsList.model';
 import { MessageResponse } from '../../../core/models/message.model';
 import { ChatsService } from '../../../core/services/chats/chats.service';
 import { FormsModule } from '@angular/forms';
 import { ChatStateService } from '../../../core/services/chats/chat-state.service';
 import { CryptoService } from '../../../core/services/crypto/crypto.service';
+import { Subscription } from 'rxjs';
+import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -14,12 +17,15 @@ import { CryptoService } from '../../../core/services/crypto/crypto.service';
   templateUrl: './chat-window.html',
   styleUrl: './chat-window.css',
 })
-export class ChatWindow implements OnChanges, AfterViewChecked{
+export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   @Input() chatData!: ChatListItem; // Recibimos el chat seleccionado del padre
 
   private chatService = inject(ChatsService);
   private chatState = inject(ChatStateService);
   private cryptoService = inject(CryptoService);
+  private wsService = inject(WebsocketService);
+  private authService=inject(AuthService);
+  private chatSubscription: Subscription | null = null;
 
   newMessageText: string = ''; // Variable vinculada al input
   isSending = false;
@@ -32,7 +38,67 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['chatData'] && this.chatData) {
+      // 1. Cargar historial (REST) - Tu código actual
       this.loadMessages();
+
+      // 2. Conectarse al WebSocket de ESTE chat
+      this.subscribeToRealTimeMessages();
+    }
+  }
+  private subscribeToRealTimeMessages() {
+    // Primero nos desconectamos del chat anterior si existía
+    this.unsubscribeChat();
+
+    // El topic debe coincidir con el Backend: "/topic/chat/{id}"
+    const topic = `/topic/chat/${this.chatData.id}`;
+    // Obtenemos mi usuario actual para comparar
+    const currentUser = this.authService.getUser();
+
+    this.chatSubscription = this.wsService.watch(topic).subscribe({
+      next: async (message) => {
+        // 'message.body' es el JSON String que envía el backend
+        const msgReceived = JSON.parse(message.body);
+
+        // EVITAR DUPLICADOS:
+        // Si el mensaje es "mine=true", significa que YO lo envié.
+        // Como ya hice .push() en sendMessage(), no necesito agregarlo otra vez.
+        // PERO: Si viene de otro dispositivo mío, sí debería mostrarlo.
+        // Por simplicidad ahora: Si ya tengo un mensaje con ese ID o content temporal, lo ignoro.
+        // O mejor: Filtramos por ID si ya existe en el array.
+        const alreadyExists = this.messages.some(m => m.id === msgReceived.id);
+        if (alreadyExists) return;
+        // El backend manda 'isMine=false' para broadcast general.
+        // Aquí corregimos: Si el nombre del remitente soy YO, entonces es mío.
+        if (currentUser && msgReceived.senderName === currentUser.username) {
+            msgReceived.isMine = true;
+        }
+
+        // DESCIFRADO EN TIEMPO REAL
+        if (msgReceived.messageTypeCode === 'TEXT' && msgReceived.iv) {
+           try {
+             msgReceived.content = await this.cryptoService.decrypt(msgReceived.content, msgReceived.iv);
+           } catch (e) {
+             console.error('Error descifrando mensaje vivo');
+           }
+        }
+
+        // Agregar al array visual
+        this.messages.push(msgReceived);
+
+        // Scroll y avisar al sidebar
+        setTimeout(() => this.scrollToBottom(), 50);
+        this.chatState.triggerRefresh();
+      },
+      error: (err) => console.error('Error WS', err)
+    });
+  }
+  ngOnDestroy() {
+    this.unsubscribeChat(); // Limpieza al destruir componente
+  }
+  private unsubscribeChat() {
+    if (this.chatSubscription) {
+      this.chatSubscription.unsubscribe();
+      this.chatSubscription = null;
     }
   }
 
@@ -96,14 +162,14 @@ export class ChatWindow implements OnChanges, AfterViewChecked{
           // Truco visual: El backend devuelve el mensaje cifrado.
                   // Nosotros ya sabemos qué decía, así que para mostrarlo rápido
                   // y evitar descifrar lo que acabamos de cifrar:
-          msgResponse.content = this.newMessageText;
-          this.messages.push(msgResponse);
+          //msgResponse.content = this.newMessageText;
+          //this.messages.push(msgResponse);
           // 2. Limpiamos el input
           this.newMessageText = '';
           this.isSending = false;
           // 3. Scroll al final
-          setTimeout(() => this.scrollToBottom(), 50);
-          this.chatState.triggerRefresh();
+          //setTimeout(() => this.scrollToBottom(), 50);
+          //this.chatState.triggerRefresh();
         },
         error: (err) => {
           console.error('Error enviando mensaje', err);

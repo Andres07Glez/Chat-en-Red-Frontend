@@ -38,8 +38,8 @@
   <div class="flex-1"></div>
 
   <!-- CONFIGURACIÓN -->
-  <button 
-    class="flex items-center justify-center mb-6 btn btn-ghost btn-circle tooltip tooltip-right" 
+  <button
+    class="flex items-center justify-center mb-6 btn btn-ghost btn-circle tooltip tooltip-right"
     data-tip="Ajustes"
     aria-label="Ajustes"
   >
@@ -54,9 +54,10 @@
     [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
   >
     <div class="avatar online">
-      <div class="w-8 md:w-10 rounded-full">
-        <img src="icons/perfil.jpeg" alt="Perfil usuario">
-      </div>
+      <div class="w-9 md:w-9 rounded-full">
+          <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold">
+                {{ currentUser?.username?.charAt(0)?.toUpperCase() }}
+          </div>      </div>
     </div>
   </button>
 </aside>
