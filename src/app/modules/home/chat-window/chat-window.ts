@@ -37,12 +37,27 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['chatData'] && this.chatData) {
-      // 1. Cargar historial (REST) - Tu código actual
-      this.loadMessages();
+    if (changes['chatData']) {
+      // 1. Si había un chat previo cargado, guardamos su borrador antes de cambiar
+      const prevChat = changes['chatData'].previousValue;
+      if (prevChat) {
+         this.chatState.setDraft(prevChat.id, this.newMessageText);
+      }
 
-      // 2. Conectarse al WebSocket de ESTE chat
-      this.subscribeToRealTimeMessages();
+      // 2. Cargamos el nuevo chat
+      if (this.chatData) {
+        // Recuperamos si había algo escrito
+        this.newMessageText = this.chatState.getDraft(this.chatData.id);
+
+        this.loadMessages();
+        this.subscribeToRealTimeMessages();
+      }
+    }
+  }
+  // Método helper para guardar
+  private saveDraft() {
+    if (this.chatData) {
+      this.chatState.setDraft(this.chatData.id, this.newMessageText);
     }
   }
   private subscribeToRealTimeMessages() {
@@ -94,6 +109,13 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   }
   ngOnDestroy() {
     this.unsubscribeChat(); // Limpieza al destruir componente
+    this.saveDraft();
+
+  }
+  onInputText() {
+    if (this.chatData) {
+        this.chatState.setDraft(this.chatData.id, this.newMessageText);
+    }
   }
   private unsubscribeChat() {
     if (this.chatSubscription) {
@@ -166,6 +188,7 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
           //this.messages.push(msgResponse);
           // 2. Limpiamos el input
           this.newMessageText = '';
+          this.chatState.setDraft(this.chatData.id, ''); // Borrar draft tras enviar
           this.isSending = false;
           // 3. Scroll al final
           //setTimeout(() => this.scrollToBottom(), 50);

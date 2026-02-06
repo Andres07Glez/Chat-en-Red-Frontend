@@ -166,5 +166,9 @@ export class ChatList implements OnInit,OnDestroy{
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+  // Función para optimizar el ngFor
+  trackByChatId(index: number, chat: ChatListItem): number {
+    return chat.id;
+  }
 
 }
