@@ -7,11 +7,12 @@ import { ProfileSidebar } from "../profile-sidebar/profile-sidebar";
 import { ChatWindow } from "../chat-window/chat-window";
 import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { UserRequestsComponent } from '../user-requests/user-requests';
+import { ContactsViewComponent } from "../contacts/contacts-view/contacts-view";
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, ChatList, menubar, ProfileSidebar, ChatWindow, UserRequestsComponent],
+  imports: [CommonModule, ChatList, menubar, ProfileSidebar, ChatWindow, UserRequestsComponent, ContactsViewComponent],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
@@ -20,7 +21,7 @@ export class MainLayout implements OnInit, OnDestroy {
   private wsService = inject(WebsocketService);
 
   // En lugar de booleano, usamos el estado de la vista. Default: 'chats'
-  activeView: 'chats' | 'profile' | 'requests' = 'chats';
+  activeView: 'chats' | 'profile' | 'requests' |'contacts' = 'chats';
 
   // Lógica para el perfil (viene del toggle)
   handleProfileToggle(isOpen: boolean) {
@@ -42,6 +43,12 @@ export class MainLayout implements OnInit, OnDestroy {
     this.activeView = 'requests';
     console.log("Abriendo vista de solicitudes...");
   }
+  // Click en icono de Solicitudes (NUEVO)
+  openContacts() {
+    this.activeView = 'contacts';
+    console.log("Abriendo vista de contactos...");
+  }
+
   ngOnInit() {
     // Iniciamos la conexión al cargar el layout principal
     this.wsService.connect();

@@ -8,7 +8,7 @@ import { ContactResponse } from '../../models/Contact.interface';
 })
 export class ContactService {
   // Asegúrate de que este puerto (8080) sea el de tu Spring Boot
-  private apiUrl = 'http://localhost:8181/contact'; 
+  private apiUrl = 'http://localhost:8181/contacts';
 
   constructor(private http: HttpClient) {}
 

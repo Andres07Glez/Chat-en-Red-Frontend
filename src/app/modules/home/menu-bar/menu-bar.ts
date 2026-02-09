@@ -21,6 +21,8 @@ export class menubar {
 
   // Evento para notificar cuando se hace clic en Solicitudes
   @Output() onRequestsClick = new EventEmitter<void>();
+  // Evento para notificar cuando se hace clic en Con
+  @Output() onContactsClick = new EventEmitter<void>();
 
   togglePerfil(): void {
     this.perfilAbierto = !this.perfilAbierto;
