@@ -11,5 +11,5 @@ import { MainLayout } from "./modules/home/main-layout/main-layout";
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('chat-app');
+  protected readonly title = signal('chat-app');
 }
