@@ -31,4 +31,8 @@ export class menubar {
     this.perfilAbierto = false;
     this.perfilToggled.emit(false);
   }
+
+  logout() {
+  this.authService.logout();
+}
 }

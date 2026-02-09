@@ -1,6 +1,7 @@
 :host {
   display: block;
   height: 100%;
+  z-index: 50;
 }
 
 /* Transiciones suaves */
@@ -35,4 +36,5 @@ button:focus-visible {
 
 .perfil-panel::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--bc) / 0.3);
+
 }

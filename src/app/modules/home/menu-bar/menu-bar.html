@@ -1,65 +1,86 @@
-<!-- Este componente solo contiene la barra lateral de iconos -->
-<aside class="flex h-full w-16 bg-base-100 border-r border-base-300 flex-col items-center py-4">
-  <!-- MENÚ -->
-  <ul class="menu menu-vertical flex items-center gap-3">
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Chats"
-        aria-label="Chats"
-        (click)="onChatsClick.emit()"
-      >
-        <img src="icons/chats.png" class="w-6 md:w-8" alt="Chats">
-      </button>
-    </li>
+<aside class="h-full w-20 bg-base-100 border-r border-base-200 flex flex-col items-center py-6 shadow-sm overflow-visible z-50">
 
-    <li>
+  <nav class="flex flex-col gap-4 w-full items-center">
+    
+    <div class="relative group w-full flex justify-center">
+      <span class="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-md hidden group-hover:block"></span>
+      
       <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        class="btn btn-ghost btn-circle btn-lg hover:bg-primary/10 transition-all duration-300 hover:scale-105"
+        data-tip="Chats"
+        aria-label="Chats"
+        (click)="onChatsClick.emit()"
+      >
+        <img src="icons/chats.png" class="w-7 h-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity" alt="Chats">
+      </button>
+    </div>
+
+    <div class="relative group w-full flex justify-center">
+      <button
+        class="btn btn-ghost btn-circle btn-lg hover:bg-secondary/10 transition-all duration-300 hover:scale-105"
         data-tip="Solicitudes"
         aria-label="Solicitudes"
         (click)="onRequestsClick.emit()" 
       >
-        <img src="icons/grupos.png" class="w-6 md:w-8" alt="Solicitudes">
+        <span class="absolute top-2 right-2 h-3 w-3 bg-secondary rounded-full border-2 border-base-100 animate-pulse"></span>
+        
+        <img src="icons/grupos.png" class="w-7 h-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity" alt="Solicitudes">
       </button>
-    </li>
+    </div>
 
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Contactos"
-        aria-label="Contactos"
-      >
-        <img src="icons/contactos.png" class="w-6 md:w-8" alt="Contactos">
-      </button>
-    </li>
-  </ul>
+    <div class="relative group w-full flex justify-center">
+      <button
+        class="btn btn-ghost btn-circle btn-lg hover:bg-accent/10 transition-all duration-300 hover:scale-105"
+        data-tip="Contactos"
+        aria-label="Contactos"
+      >
+        <img src="icons/contactos.png" class="w-7 h-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity" alt="Contactos">
+      </button>
+    </div>
 
-  <!-- ESPACIADOR -->
-  <div class="flex-1"></div>
+  </nav>
 
-  <!-- CONFIGURACIÓN -->
-  <button 
-    class="flex items-center justify-center mb-6 btn btn-ghost btn-circle tooltip tooltip-right" 
-    data-tip="Ajustes"
-    aria-label="Ajustes"
-  >
-    <img src="icons/ajustes.png" class="w-6 md:w-8" alt="Ajustes">
-  </button>
+  <div class="flex-1"></div>
 
+  <div class="flex flex-col gap-3 items-center w-full mb-2">
 
+    <div class="dropdown dropdown-top dropdown-right">
+      <div 
+        tabindex="0" 
+        role="button" 
+        class="btn btn-ghost btn-circle hover:bg-neutral/10 transition-transform hover:rotate-90 duration-500"
+        data-tip="Ajustes"
+      >
+        <img src="icons/ajustes.png" class="w-7 h-7 opacity-60 hover:opacity-100" alt="Ajustes">
+      </div>
 
-  <!-- PERFIL -->
-  <button
-    (click)="togglePerfil()"
-    class="perfil-button flex flex-col items-center mb-6 focus:outline-none btn btn-ghost btn-circle"
-    aria-label="Abrir perfil"
-    [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
-  >
-    <div class="avatar online">
-      <div class="w-8 md:w-10 rounded-full">
-        <img src="icons/perfil.jpeg" alt="Perfil usuario">
-      </div>
-    </div>
-  </button>
+      <ul tabindex="0" class="dropdown-content z-[100] menu p-2 bg-transparent shadow-none gap-3 mb-2 ml-4">
+        <li>
+          <button (click)="logout()" class="btn btn-circle btn-error text-white shadow-lg border-2 border-base-100 hover:scale-110" data-tip="Cerrar Sesión">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          </button>
+        </li>
+        <li>
+          <button class="btn btn-circle btn-info text-white shadow-lg border-2 border-base-100 hover:scale-110" data-tip="Acerca de">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <button
+      (click)="togglePerfil()"
+      class="group relative focus:outline-none"
+      aria-label="Abrir perfil"
+      [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
+    >
+      <div class="avatar online transition-transform duration-300 group-hover:scale-110">
+        <div class="w-10 rounded-full ring ring-base-300 ring-offset-base-100 ring-offset-2 group-hover:ring-primary transition-all">
+          <img src="icons/maclovin.png" alt="Perfil usuario" class="object-cover">
+        </div>
+      </div>
+    </button>
+    
+  </div>
+
 </aside>
