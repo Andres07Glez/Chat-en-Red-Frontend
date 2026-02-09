@@ -1,0 +1,102 @@
+<div class="h-full bg-base-100 p-4 overflow-y-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+        <h1 class="text-2xl font-bold text-base-content">Gestión de Contactos</h1>
+        <p class="text-sm text-base-content/60">Administra tus nuevas amistades</p>
+        </div>
+        <div class="badge badge-primary badge-lg gap-2">
+        Total: {{ receivedRequests.length + sentRequests.length }}
+        </div>
+    </div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+    
+        <div class="card bg-base-200 shadow-xl min-h-[450px] flex flex-col">
+        <div class="card-body p-4 flex flex-col h-full">
+            <h2 class="card-title text-lg flex justify-between shrink-0">
+            Recibidas
+            <div class="badge badge-secondary" *ngIf="receivedRequests.length > 0">
+                {{ receivedRequests.length }}
+            </div>
+            </h2>
+            <div class="divider my-0 shrink-0"></div>
+
+            <div class="flex-grow overflow-y-auto mt-4">
+            <div *ngIf="receivedRequests.length === 0" class="flex flex-col items-center justify-center h-full opacity-30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <span class="text-lg font-medium">Bandeja limpia</span>
+            </div>
+
+            <div class="space-y-3">
+                <div *ngFor="let req of receivedRequests" 
+                    class="flex items-center justify-between p-3 bg-base-100 rounded-lg shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="avatar">
+                    <div class="w-10 h-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                        <img [src]="req.otherAvatarUrl || 'assets/default-avatar.png'" />
+                    </div>
+                    </div>
+                    <div>
+                    <p class="font-bold text-sm">{{ req.otherDisplayName }}</p>
+                    <p class="text-[10px] opacity-60 uppercase">{{ req.createdAt | date:'short' }}</p>
+                    </div>
+                </div>
+                <div class="join">
+                    <button (click)="aceptar(req.id)" class="btn btn-sm btn-success join-item text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    </button>
+                    <button (click)="rechazar(req.id)" class="btn btn-sm btn-error join-item text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-xl min-h-[450px] flex flex-col">
+        <div class="card-body p-4 flex flex-col h-full">
+            <h2 class="card-title text-lg text-base-content/70 flex justify-between shrink-0">
+            Enviadas
+            <span class="text-xs font-normal opacity-50">{{ sentRequests.length }}</span>
+            </h2>
+            <div class="divider my-0 shrink-0"></div>
+
+            <div class="flex-grow overflow-y-auto mt-4">
+            <div *ngIf="sentRequests.length === 0" class="flex flex-col items-center justify-center h-full opacity-30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <span class="text-lg font-medium">Sin envíos</span>
+            </div>
+
+            <div class="space-y-3">
+                <div *ngFor="let req of sentRequests" 
+                    class="flex items-center justify-between p-3 bg-base-100 rounded-lg border border-base-300">
+                <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                    <div class="bg-neutral-focus text-neutral-content rounded-full w-10 h-10">
+                        <img *ngIf="req.otherAvatarUrl" [src]="req.otherAvatarUrl" />
+                        <span *ngIf="!req.otherAvatarUrl" class="text-xs">{{ req.otherDisplayName | slice:0:2 }}</span>
+                    </div>
+                    </div>
+                    <div>
+                    <p class="font-medium text-sm">{{ req.otherDisplayName }}</p>
+                    <div class="badge badge-ghost badge-xs">PENDIENTE</div>
+                    </div>
+                </div>
+                <button (click)="rechazar(req.id)" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                    Cancelar
+                </button>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+
+    </div>
+
+</div>

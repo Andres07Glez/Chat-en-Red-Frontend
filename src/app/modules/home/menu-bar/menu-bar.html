@@ -1,41 +1,42 @@
 <!-- Este componente solo contiene la barra lateral de iconos -->
 <aside class="flex h-full w-16 bg-base-100 border-r border-base-300 flex-col items-center py-4">
-  <!-- MENÚ -->
-  <ul class="menu menu-vertical flex items-center gap-3">
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Chats"
-        aria-label="Chats"
-        (click)="onChatsClick.emit()"
-      >
-        <img src="icons/chats.png" class="w-6 md:w-8" alt="Chats">
-      </button>
-    </li>
+  <!-- MENÚ -->
+  <ul class="menu menu-vertical flex items-center gap-3">
+    <li>
+      <button
+        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        data-tip="Chats"
+        aria-label="Chats"
+        (click)="onChatsClick.emit()"
+      >
+        <img src="icons/chats.png" class="w-6 md:w-8" alt="Chats">
+      </button>
+    </li>
 
     <li>
       <button
         class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
         data-tip="Solicitudes"
         aria-label="Solicitudes"
+        (click)="onRequestsClick.emit()"
       >
         <img src="icons/grupos.png" class="w-6 md:w-8" alt="Solicitudes">
       </button>
     </li>
 
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Contactos"
-        aria-label="Contactos"
-      >
-        <img src="icons/contactos.png" class="w-6 md:w-8" alt="Contactos">
-      </button>
-    </li>
-  </ul>
+    <li>
+      <button
+        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
+        data-tip="Contactos"
+        aria-label="Contactos"
+      >
+        <img src="icons/contactos.png" class="w-6 md:w-8" alt="Contactos">
+      </button>
+    </li>
+  </ul>
 
-  <!-- ESPACIADOR -->
-  <div class="flex-1"></div>
+  <!-- ESPACIADOR -->
+  <div class="flex-1"></div>
 
   <!-- CONFIGURACIÓN -->
   <button
