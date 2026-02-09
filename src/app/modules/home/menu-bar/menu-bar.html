@@ -18,6 +18,7 @@
         class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
         data-tip="Solicitudes"
         aria-label="Solicitudes"
+        (click)="onRequestsClick.emit()" 
       >
         <img src="icons/grupos.png" class="w-6 md:w-8" alt="Solicitudes">
       </button>
@@ -45,6 +46,8 @@
   >
     <img src="icons/ajustes.png" class="w-6 md:w-8" alt="Ajustes">
   </button>
+
+
 
   <!-- PERFIL -->
   <button

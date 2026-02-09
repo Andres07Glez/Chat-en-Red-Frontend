@@ -5,24 +5,39 @@ import { CommonModule } from '@angular/common';
 import { menubar } from "../menu-bar/menu-bar";
 import { ProfileSidebar } from "../profile-sidebar/profile-sidebar";
 import { ChatWindow } from "../chat-window/chat-window";
+import { UserRequestsComponent } from '../user-requests/user-requests';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, ChatList, menubar, ProfileSidebar, ChatWindow],
+  imports: [CommonModule, ChatList, menubar, ProfileSidebar, ChatWindow, UserRequestsComponent],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
 export class MainLayout {
-  // Hacemos público el servicio para usarlo en el HTML con signals
   public chatState = inject(ChatStateService);
-  showProfilePanel = false;
+
+  // En lugar de booleano, usamos el estado de la vista. Default: 'chats'
+  activeView: 'chats' | 'profile' | 'requests' = 'chats';
+
+  // Lógica para el perfil (viene del toggle)
   handleProfileToggle(isOpen: boolean) {
-    this.showProfilePanel = isOpen;
+    if (isOpen) {
+      this.activeView = 'profile';
+    } else {
+      // Si cierran el perfil, volvemos a chats
+      this.activeView = 'chats';
+    }
   }
 
-  // Método para cuando le das click al icono de "Chats"
+  // Click en icono de Chats
   openChatList() {
-    this.showProfilePanel = false;
+    this.activeView = 'chats';
+  }
+
+  // Click en icono de Solicitudes (NUEVO)
+  openRequests() {
+    this.activeView = 'requests';
+    console.log("Abriendo vista de solicitudes...");
   }
 }
