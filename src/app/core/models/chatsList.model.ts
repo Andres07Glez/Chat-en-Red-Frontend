@@ -7,4 +7,6 @@ export interface ChatListItem {
   unreadCount?: number;  // Opcional
   // avatar?: string;    // (Lo dejaremos pendiente, usaremos uno por defecto)
   lastMessageIV:string;
+  otherUserId?: number;
+  otherUserPublicKey?: string;
 }

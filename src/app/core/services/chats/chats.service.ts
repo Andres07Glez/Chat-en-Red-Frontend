@@ -23,7 +23,10 @@ export class ChatsService {
     return this.http.get<MessageResponse[]>(`${environment.baseUrl}/messages/${conversationId}`);
   }
   sendMessage(request: any): Observable<MessageResponse> {
-  return this.http.post<MessageResponse>(`${environment.baseUrl}/messages`, request);
-}
+    return this.http.post<MessageResponse>(`${environment.baseUrl}/messages`, request);
+  }
+  markAsRead(conversationId: number): Observable<void> {
+    return this.http.post<void>(`${environment.baseUrl}/conversations/${conversationId}/read`, {});
+  }
 
 }
