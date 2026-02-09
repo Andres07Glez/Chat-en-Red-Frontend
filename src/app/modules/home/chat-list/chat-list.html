@@ -1,25 +1,16 @@
 <div class="flex flex-col h-full bg-base-100 border-r border-base-300">
 
     <div class="navbar bg-base-200 min-h-[60px] px-4 justify-between sticky top-0 z-10 shadow-sm">
-      <div class="flex gap-2">
-
-            <button class="btn btn-ghost btn-circle btn-sm text-base-content" (click)="themeService.toggleTheme()">
-                <svg *ngIf="themeService.currentTheme() === 'dark'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg *ngIf="themeService.currentTheme() === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
+    <div class="flex gap-2">
 
             </div>
 
         <div class="flex gap-2">
             <button class="btn btn-ghost btn-circle btn-sm text-base-content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                <img src="icons/anadir-grupo.png" class="w-7 h-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity" alt="Contactos">               
             </button>
             <button class="btn btn-ghost btn-circle btn-sm text-base-content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                <img src="icons/solicitudes.png" class="w-7 h-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity" alt="Contactos">                                         
             </button>
         </div>
     </div>

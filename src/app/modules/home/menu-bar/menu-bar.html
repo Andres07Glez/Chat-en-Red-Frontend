@@ -55,16 +55,35 @@
       </div>
 
       <ul tabindex="0" class="dropdown-content z-[100] menu p-2 bg-transparent shadow-none gap-3 mb-2 ml-4">
+        
+        <li>
+          <button 
+            (click)="themeService.toggleTheme()" 
+            class="btn btn-circle btn-warning text-white shadow-lg border-2 border-base-100 hover:scale-110 tooltip tooltip-right" 
+            [attr.data-tip]="themeService.currentTheme() === 'dark' ? 'Modo Claro' : 'Modo Oscuro'">
+            
+            <svg *ngIf="themeService.currentTheme() === 'dark'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+
+            <svg *ngIf="themeService.currentTheme() === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+        </li>
+
         <li>
           <button (click)="logout()" class="btn btn-circle btn-error text-white shadow-lg border-2 border-base-100 hover:scale-110" data-tip="Cerrar Sesión">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           </button>
         </li>
+        
         <li>
           <button class="btn btn-circle btn-info text-white shadow-lg border-2 border-base-100 hover:scale-110" data-tip="Acerca de">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </button>
         </li>
+
       </ul>
     </div>
 
@@ -74,13 +93,16 @@
       aria-label="Abrir perfil"
       [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
     >
+    
       <div class="avatar online transition-transform duration-300 group-hover:scale-110">
         <div class="w-10 rounded-full ring ring-base-300 ring-offset-base-100 ring-offset-2 group-hover:ring-primary transition-all">
-          <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2x1 font-bold"> 
+          
+          <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold"> 
               {{ currentUser?.username?.charAt(0).toUpperCase() }}
           </div>
         </div>
       </div>
+      
     </button>
     
   </div>
