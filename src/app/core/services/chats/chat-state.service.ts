@@ -11,6 +11,16 @@ export class ChatStateService {
   selectedChat = signal<ChatListItem | null>(null);
   private refreshListSource = new Subject<void>();
   refreshList$ = this.refreshListSource.asObservable();
+  // Mapa para guardar borradores: { chatId: "texto..." }
+  private drafts = new Map<number, string>();
+
+  setDraft(chatId: number, text: string) {
+    this.drafts.set(chatId, text);
+  }
+
+  getDraft(chatId: number): string {
+    return this.drafts.get(chatId) || '';
+  }
 
   // Método para seleccionar un chat (Lo llamará tu ChatList)
   selectChat(chat: ChatListItem) {

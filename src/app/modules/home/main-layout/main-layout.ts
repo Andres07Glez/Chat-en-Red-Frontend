@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ChatList } from "../chat-list/chat-list";
 import { ChatStateService } from '../../../core/services/chats/chat-state.service';
 import { CommonModule } from '@angular/common';
 import { menubar } from "../menu-bar/menu-bar";
 import { ProfileSidebar } from "../profile-sidebar/profile-sidebar";
 import { ChatWindow } from "../chat-window/chat-window";
+import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { UserRequestsComponent } from '../user-requests/user-requests';
 
 @Component({
@@ -14,8 +15,9 @@ import { UserRequestsComponent } from '../user-requests/user-requests';
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
-export class MainLayout {
+export class MainLayout implements OnInit, OnDestroy {
   public chatState = inject(ChatStateService);
+  private wsService = inject(WebsocketService);
 
   // En lugar de booleano, usamos el estado de la vista. Default: 'chats'
   activeView: 'chats' | 'profile' | 'requests' = 'chats';
@@ -40,4 +42,14 @@ export class MainLayout {
     this.activeView = 'requests';
     console.log("Abriendo vista de solicitudes...");
   }
+  ngOnInit() {
+    // Iniciamos la conexión al cargar el layout principal
+    this.wsService.connect();
+  }
+
+  ngOnDestroy() {
+    // Cerramos conexión si sale del layout (logout)
+    this.wsService.disconnect();
+  }
+
 }
