@@ -8,11 +8,12 @@ import { CommonModule } from '@angular/common';
 
 import { ContactService } from '../../../../core/services/contacts/Contact.service';
 import { ContactResponse } from '../../../../core/models/Contact.interface';
+import { AddContactComponent } from '../add-contact/add-contact';
 
 @Component({
   selector: 'app-contacts-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AddContactComponent],
   templateUrl: './contacts-view.html',
   styleUrl: './contacts-view.css'
 })
@@ -33,6 +34,18 @@ export class ContactsViewComponent implements OnInit {
 
   @ViewChild('contactModal')
   contactModal!: ElementRef<HTMLDialogElement>;
+
+  // Referencia al componente hijo
+  @ViewChild('addContactChild') addContactChild!: AddContactComponent;
+
+  openAddContact(): void {
+    this.contactModal.nativeElement.close(); // Cierra el de "Mis Contactos"
+    this.addContactChild.show();            // Abre el nuevo
+  }
+
+  onAddContactClosed(): void {
+    this.openModal(); // Reabre el de "Mis Contactos" cuando el otro se cierra
+  }
 
   // =====================
   // Constructor
