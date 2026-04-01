@@ -1,0 +1,80 @@
+<div class="flex flex-col h-full bg-base-100 relative">
+
+    <div class="flex-none h-16 bg-base-200 flex items-center px-4 shadow-sm z-10 justify-between">
+        <div class="flex items-center gap-3">
+            <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-10 flex items-center justify-center">
+                    <span class="text-lg font-bold pb-1">{{ chatData.name.charAt(0).toUpperCase() }}</span>
+                </div>
+            </div>
+            <div class="flex flex-col justify-center">
+                <span class="font-bold text-base-content leading-tight">{{ chatData.name }}</span>
+                <span class="text-xs text-base-content/60" *ngIf="chatData.isGroup">Grupo</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-base-100" #scrollContainer>
+
+        <div *ngIf="isLoading" class="flex justify-center mt-10">
+            <span class="loading loading-spinner text-primary"></span>
+        </div>
+
+        <ng-container *ngFor="let msg of messages; let i = index">
+            <div *ngIf="shouldShowDateSeparator(messages[i-1], msg)" class="w-full flex justify-center my-4">
+                <div class="badge badge-ghost text-xs font-semibold opacity-70 p-3">
+                    {{ formatDateSeparator(msg.sentAt) }}
+                </div>
+            </div>
+
+            <div class="chat" [ngClass]="msg.isMine ? 'chat-end' : 'chat-start'">
+
+                <div class="chat-image avatar" *ngIf="chatData.isGroup">  <!-- agregar a condicion para mostrar avatar || msg.isMine-->
+                    <div class="w-10 rounded-full placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-full h-full flex items-center justify-center">
+                                <span class="font-bold text-sm">{{ msg.senderName.charAt(0).toUpperCase() }}</span>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="chat-header">
+                    <span class="font-bold mr-1">{{ msg.senderName }}</span>
+                    <time class="text-xs opacity-50">{{ formatTime(msg.sentAt) }}</time>
+                </div>
+
+                <div class="chat-bubble"
+                        [ngClass]="msg.isMine ? 'chat-bubble-primary text-primary-content' : 'chat-bubble-secondary text-secondary-content'">
+                    {{ msg.content }}
+                </div>
+
+                <div class="chat-footer opacity-50" *ngIf="msg.isMine">
+                    Entregado
+                </div>
+            </div>
+
+        </ng-container>
+    </div>
+
+    <div class="flex-none p-3 bg-base-200 flex gap-2 items-end">
+        <button class="btn btn-ghost btn-circle text-base-content/60">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+        </button>
+        <textarea
+            [(ngModel)]="newMessageText"
+            (keydown)="onKeyDown($event)"
+            [disabled]="isSending"
+            class="textarea textarea-bordered w-full resize-none bg-base-100 focus:border-primary custom-scrollbar"
+            placeholder="Escribe un mensaje..."
+            rows="1"></textarea>
+
+        <button
+            class="btn btn-primary btn-circle"
+            (click)="sendMessage()"
+            [disabled]="!newMessageText.trim() || isSending">
+
+            <span *ngIf="isSending" class="loading loading-spinner loading-xs"></span>
+
+            <svg *ngIf="!isSending" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+        </button>
+    </div>
+</div>

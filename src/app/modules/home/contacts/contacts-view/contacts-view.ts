@@ -2,7 +2,9 @@ import {
   Component,
   OnInit,
   ViewChild,
-  ElementRef
+  ElementRef,
+  Output,
+  EventEmitter
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -19,78 +21,37 @@ import { AddContactComponent } from '../add-contact/add-contact';
 })
 export class ContactsViewComponent implements OnInit {
 
+  /// =====================
+  // Estado
   // =====================
-  // Estado del componente
-  // =====================
-
   contacts: ContactResponse[] = [];
   isLoading: boolean = true;
-
   openMenuContactId: number | null = null;
 
-  // =====================
-  // Referencia al modal
-  // =====================
+  @Output() closeProfile = new EventEmitter<void>();
 
-  @ViewChild('contactModal')
-  contactModal!: ElementRef<HTMLDialogElement>;
+  // NOTA: Eliminamos @ViewChild('contactModal') porque ya no es un modal.
 
-  // Referencia al componente hijo
-  @ViewChild('addContactChild') addContactChild!: AddContactComponent;
-
-  openAddContact(): void {
-    this.contactModal.nativeElement.close(); // Cierra el de "Mis Contactos"
-    this.addContactChild.show();            // Abre el nuevo
-  }
-
-  onAddContactClosed(): void {
-    this.openModal(); // Reabre el de "Mis Contactos" cuando el otro se cierra
-  }
-
-  // =====================
-  // Constructor
-  // =====================
-
-  constructor(
-    private contactService: ContactService
-  ) {}
-
-  // =====================
-  // Ciclo de vida
-  // =====================
+  constructor(private contactService: ContactService) {}
 
   ngOnInit(): void {
+    // Ya no hacemos this.contactModal.nativeElement.showModal();
+    // Directamente cargamos los datos
     this.loadContacts();
   }
 
-  // =====================
-  // Modal
-  // =====================
-
-  openModal(): void {
-    this.contactModal.nativeElement.showModal();
-  }
-
-  closeModal(): void {
-    this.contactModal.nativeElement.close();
-  }
+  // Eliminamos openModal() y closeModal() porque el padre (MainLayout) controla la visibilidad con *ngIf
 
   // =====================
-  // Menú de acciones
+  // Acciones
   // =====================
-
   toggleMenu(contactId: number): void {
-    this.openMenuContactId =
-      this.openMenuContactId === contactId ? null : contactId;
+    // Si tocan el mismo, se cierra (null), si no, se abre ese ID
+    this.openMenuContactId = this.openMenuContactId === contactId ? null : contactId;
   }
-
-  // =====================
-  // Data
-  // =====================
 
   loadContacts(): void {
     this.isLoading = true;
-
     this.contactService.getMyContacts().subscribe({
       next: (data) => {
         this.contacts = data;

@@ -8,8 +8,8 @@ import { ContactLookupResponse } from '../../models/ContactLookupResponse.interf
   providedIn: 'root'
 })
 export class ContactService {
-
-  private apiUrl = 'http://localhost:8181/contact';
+  // Asegúrate de que este puerto (8080) sea el de tu Spring Boot
+  private apiUrl = 'http://localhost:8181/contacts';
 
   constructor(private http: HttpClient) {}
 
