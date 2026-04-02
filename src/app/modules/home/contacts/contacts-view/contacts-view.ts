@@ -24,27 +24,28 @@ export class ContactsViewComponent implements OnInit {
   /// =====================
   // Estado
   // =====================
+
+  // 1. Agregamos la referencia al componente hijo
+  @ViewChild(AddContactComponent) addContactChild!: AddContactComponent;
+
   contacts: ContactResponse[] = [];
   isLoading: boolean = true;
   openMenuContactId: number | null = null;
 
   @Output() closeProfile = new EventEmitter<void>();
 
-  // NOTA: Eliminamos @ViewChild('contactModal') porque ya no es un modal.
-
   constructor(private contactService: ContactService) {}
 
   ngOnInit(): void {
-    // Ya no hacemos this.contactModal.nativeElement.showModal();
-    // Directamente cargamos los datos
     this.loadContacts();
   }
 
-  // Eliminamos openModal() y closeModal() porque el padre (MainLayout) controla la visibilidad con *ngIf
+  // 2. Creamos el método para abrir el modal del hijo
+  openAddContactModal(): void {
+    this.addContactChild.show();
+  }
 
-  // =====================
-  // Acciones
-  // =====================
+
   toggleMenu(contactId: number): void {
     // Si tocan el mismo, se cierra (null), si no, se abre ese ID
     this.openMenuContactId = this.openMenuContactId === contactId ? null : contactId;

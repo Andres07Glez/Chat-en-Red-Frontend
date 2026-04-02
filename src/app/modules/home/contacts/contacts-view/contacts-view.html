@@ -2,8 +2,19 @@
 
   <div class="flex-none p-4 border-b border-base-200 flex justify-between items-center bg-base-100 z-10">
     <h3 class="font-bold text-lg">Mis Contactos</h3>
-    <button class="btn btn-sm btn-circle btn-ghost" (click)="closeProfile.emit()">✕</button>
+    <div class="flex items-center gap-0.5">
+      <button class="btn btn-md btn-circle btn-ghost" title="Agregar contacto" (click)="openAddContactModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+          class="size-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
+      <button class="btn btn-md btn-circle btn-ghost" (click)="closeProfile.emit()">✕</button>
+    </div>
   </div>
+
+  <app-add-contact (modalClosed)="loadContacts()"></app-add-contact>
+
 
   <div class="flex-1 overflow-y-auto relative">
 
@@ -21,22 +32,25 @@
 
         <div class="avatar online">
           <div class="w-9 md:w-9 rounded-full">
-              <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold">
-                    {{ contact?.contactName?.charAt(0)?.toUpperCase() }}
-              </div>      </div>
+            <div
+              class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold">
+              {{ contact?.contactName?.charAt(0)?.toUpperCase() }}
+            </div>
+          </div>
         </div>
 
-            <div class="flex-grow">
-              <div class="font-medium">{{ contact.contactName }}</div>
-              <div class="text-xs uppercase font-semibold opacity-60">
-                {{ contact.contactStatusName }}
-              </div>
+        <div class="flex-grow">
+          <div class="font-medium">{{ contact.contactName }}</div>
+          <div class="text-xs uppercase font-semibold opacity-60">
+            {{ contact.contactStatusName }}
+          </div>
         </div>
 
         <div class="dropdown dropdown-bottom dropdown-end">
 
           <button class="btn btn-square btn-ghost" (click)="toggleMenu(contact.id)">
-            <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="5" r="1"></circle>
               <circle cx="12" cy="12" r="1"></circle>
               <circle cx="12" cy="19" r="1"></circle>
@@ -44,7 +58,7 @@
           </button>
 
           <ul *ngIf="openMenuContactId === contact.id"
-              class="dropdown-content z-[999] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
+            class="dropdown-content z-[999] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
             <li><a>💬 Iniciar conversación</a></li>
             <li><a>👤 Ver perfil</a></li>
             <li><a class="text-error">🗑️ Eliminar</a></li>
@@ -58,5 +72,3 @@
     <button></button>
   </form>
 </div>
-
-
