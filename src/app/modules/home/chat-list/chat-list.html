@@ -1,76 +1,157 @@
 <div class="flex flex-col h-full bg-base-100 border-r border-base-300">
 
+    <!-- ── Navbar ──────────────────────────────────────────────────── -->
     <div class="navbar bg-base-200 min-h-[60px] px-4 justify-between sticky top-0 z-10 shadow-sm">
+
+      <!-- Izquierda: toggle de tema -->
       <div class="flex gap-2">
+        <button class="btn btn-ghost btn-circle btn-sm text-base-content"
+                (click)="themeService.toggleTheme()">
+          <svg *ngIf="themeService.currentTheme() === 'dark'"
+               xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg *ngIf="themeService.currentTheme() === 'light'"
+               xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
 
-            <button class="btn btn-ghost btn-circle btn-sm text-base-content" (click)="themeService.toggleTheme()">
-                <svg *ngIf="themeService.currentTheme() === 'dark'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      <!-- Derecha: botón "+" con mini-menú y botón "⋮" -->
+      <div class="flex gap-2 items-center">
+
+        <!-- Botón + con menú desplegable -->
+        <div class="relative new-chat-menu-wrapper">
+          <button
+            (click)="toggleNewChatMenu()"
+            class="btn btn-ghost btn-circle btn-sm text-base-content"
+            title="Nueva conversación"
+            [class.bg-base-300]="showNewChatMenu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          <!-- Mini-menú desplegable -->
+          <ul *ngIf="showNewChatMenu"
+              class="absolute right-0 top-full mt-2 z-999 w-52 bg-base-100 border border-base-300 rounded-xl shadow-xl py-1 overflow-hidden">
+
+            <!-- Chat individual -->
+            <li>
+              <button
+                (click)="openStartIndividualChat()"
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-base-200 transition-colors text-left">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-none" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <svg *ngIf="themeService.currentTheme() === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                <span class="font-medium">Chat individual</span>
+              </button>
+            </li>
+
+            <!-- Grupo (próximamente) -->
+            <li>
+              <button
+                disabled
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm opacity-40 cursor-not-allowed text-left">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-none" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-            </button>
+                <div class="flex flex-col">
+                  <span class="font-medium leading-tight">Grupo</span>
+                  <span class="text-xs opacity-60">Próximamente</span>
+                </div>
+              </button>
+            </li>
 
-            </div>
-
-        <div class="flex gap-2">
-            <button class="btn btn-ghost btn-circle btn-sm text-base-content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-            </button>
-            <button class="btn btn-ghost btn-circle btn-sm text-base-content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-            </button>
+          </ul>
         </div>
+
+        <!-- Botón de opciones ⋮ -->
+        <button class="btn btn-ghost btn-circle btn-sm text-base-content">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </button>
+
+      </div>
     </div>
 
+    <!-- ── Buscador ─────────────────────────────────────────────────── -->
     <div class="p-3 bg-base-100 border-b border-base-200">
-        <label class="input input-bordered input-sm flex items-center gap-2 rounded-full bg-base-200 focus-within:bg-base-100 focus-within:border-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 opacity-70"><path fill-rule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clip-rule="evenodd" /></svg>
-            <input type="text" class="grow" placeholder="Buscar chat..." />
-        </label>
+      <label class="input input-bordered input-sm flex items-center gap-2 rounded-full bg-base-200 focus-within:bg-base-100 focus-within:border-primary transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+             class="w-4 h-4 opacity-70">
+          <path fill-rule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clip-rule="evenodd" />
+        </svg>
+        <input type="text" class="grow" placeholder="Buscar chat..." />
+      </label>
     </div>
 
+    <!-- ── Lista de chats ───────────────────────────────────────────── -->
     <div class="flex-1 overflow-y-auto custom-scrollbar">
 
-        <div *ngIf="isLoading" class="flex justify-center items-center h-20 text-primary">
-            <span class="loading loading-spinner loading-md"></span>
+      <div *ngIf="isLoading" class="flex justify-center items-center h-20 text-primary">
+        <span class="loading loading-spinner loading-md"></span>
+      </div>
+
+      <div *ngIf="!isLoading && chats.length === 0"
+           class="text-center p-5 text-base-content/50">
+        <p>No tienes chats activos.</p>
+        <p class="text-xs mt-1 opacity-60">Pulsa <strong>+</strong> para iniciar uno</p>
+      </div>
+
+      <div *ngFor="let chat of chats; trackBy: trackByChatId"
+           (click)="selectChat(chat)"
+           class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-200 transition-colors border-b border-base-200/50"
+           [class.bg-base-200]="selectedChatId === chat.id"
+           [class.border-l-4]="selectedChatId === chat.id"
+           [class.border-l-primary]="selectedChatId === chat.id">
+
+        <div class="avatar placeholder">
+          <div class="rounded-full w-12 text-neutral-content shadow-sm flex items-center justify-center"
+               [ngClass]="chat.isGroup ? 'bg-secondary text-secondary-content' : 'bg-neutral'">
+            <span class="text-lg font-bold pb-1">{{ chat.name.charAt(0).toUpperCase() }}</span>
+          </div>
         </div>
 
-        <div *ngIf="!isLoading && chats.length === 0" class="text-center p-5 text-base-content/50">
-            <p>No tienes chats activos.</p>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-baseline mb-1">
+            <h3 class="font-semibold text-base-content truncate">{{ chat.name }}</h3>
+            <span class="text-xs text-base-content/60 whitespace-nowrap ml-2">
+              {{ formatTime(chat.lastActivity) }}
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-base-content/70 truncate pr-2">
+              {{ chat.lastMessage || '...' }}
+            </p>
+            <span *ngIf="chat.unreadCount && chat.unreadCount > 0"
+                  class="badge badge-primary badge-sm font-bold text-white shadow-lg shadow-primary/40">
+              {{ chat.unreadCount }}
+            </span>
+          </div>
         </div>
 
-        <div *ngFor="let chat of chats;trackBy: trackByChatId"
-             (click)="selectChat(chat)"
-             class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-200 transition-colors border-b border-base-200/50"
-             [class.bg-base-200]="selectedChatId === chat.id"
-             [class.border-l-4]="selectedChatId === chat.id"
-             [class.border-l-primary]="selectedChatId === chat.id"> <div class="avatar placeholder">
-                <div class="rounded-full w-12 text-neutral-content shadow-sm flex items-center justify-center"
-                     [ngClass]="chat.isGroup ? 'bg-secondary text-secondary-content' : 'bg-neutral'">
-                    <span class="text-lg font-bold pb-1">{{ chat.name.charAt(0).toUpperCase() }}</span>
-                </div>
-            </div>
-
-            <div class="flex-1 min-w-0"> <div class="flex justify-between items-baseline mb-1">
-                    <h3 class="font-semibold text-base-content truncate">{{ chat.name }}</h3>
-                    <span class="text-xs text-base-content/60 whitespace-nowrap ml-2">
-                        {{ formatTime(chat.lastActivity) }}
-                    </span>
-                </div>
-
-                <div class="flex justify-between items-center">
-                    <p class="text-sm text-base-content/70 truncate pr-2">
-                        {{ chat.lastMessage || '...' }}
-                    </p>
-
-                    <span *ngIf="chat.unreadCount && chat.unreadCount > 0"
-                          class="badge badge-primary badge-sm font-bold text-white shadow-lg shadow-primary/40">
-                        {{ chat.unreadCount }}
-                    </span>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <!-- Modal de nueva conversación (hijo) -->
+    <app-start-chat></app-start-chat>
+
 </div>

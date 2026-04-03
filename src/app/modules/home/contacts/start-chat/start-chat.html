@@ -1,0 +1,126 @@
+<dialog #startChatModal class="modal">
+
+  <div class="modal-box w-full max-w-md p-0 bg-[#151921] border border-gray-800 text-gray-200 overflow-hidden flex flex-col max-h-[85vh]">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <div class="p-6 pb-3 flex justify-between items-start flex-none">
+      <div>
+        <h3 class="font-bold text-2xl text-white">Nueva conversación</h3>
+        <p class="text-sm text-gray-400 mt-1">Selecciona un contacto para chatear</p>
+      </div>
+      <button
+        (click)="close()"
+        class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:text-white hover:bg-white/10">
+        ✕
+      </button>
+    </div>
+
+    <!-- ── Buscador ───────────────────────────────────────────────── -->
+    <div class="px-6 pb-4 flex-none">
+      <div class="flex items-center gap-2 bg-[#1d232a] rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors px-3 h-11">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 flex-none" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="filterContacts()"
+          placeholder="Buscar contacto..."
+          class="bg-transparent border-none focus:outline-none text-white text-sm w-full placeholder-gray-600"
+        />
+      </div>
+    </div>
+
+    <!-- ── Lista de contactos ─────────────────────────────────────── -->
+    <div class="flex-1 overflow-y-auto px-3 pb-4">
+
+      <!-- Cargando -->
+      <div *ngIf="isLoading" class="flex justify-center py-10">
+        <span class="loading loading-spinner text-primary loading-md"></span>
+      </div>
+
+      <!-- Sin contactos -->
+      <div *ngIf="!isLoading && contacts.length === 0"
+           class="flex flex-col items-center justify-center gap-2 py-10 text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-40" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="text-sm font-medium">No tienes contactos aún</span>
+        <span class="text-xs opacity-60">Agrega contactos primero desde el menú</span>
+      </div>
+
+      <!-- Sin resultados de búsqueda -->
+      <div *ngIf="!isLoading && contacts.length > 0 && filteredContacts.length === 0"
+           class="text-center text-gray-500 text-sm py-8">
+        Sin resultados para "<span class="text-gray-300">{{ searchQuery }}</span>"
+      </div>
+
+      <!-- Lista -->
+      <button
+        *ngFor="let contact of filteredContacts"
+        (click)="startConversation(contact)"
+        [disabled]="isStarting"
+        class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/12 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed group">
+
+        <!-- Avatar -->
+        <div class="flex-none">
+          <div class="w-11 h-11 rounded-full bg-neutral text-neutral-content flex items-center justify-center text-lg font-bold shadow">
+            {{ contact.contactName.charAt(0).toUpperCase() }}
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-white text-sm truncate leading-tight">
+            {{ contact.contactName }}
+          </p>
+          <p class="text-xs text-gray-500 truncate mt-0.5">
+            {{ contact.contactStatusName }}
+          </p>
+        </div>
+
+        <!-- Estado de carga para este contacto -->
+        <div class="flex-none">
+          <span *ngIf="startingId === contact.contactUserId"
+                class="loading loading-spinner loading-sm text-primary">
+          </span>
+          <svg *ngIf="startingId !== contact.contactUserId && !isStarting"
+               xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 text-gray-700 group-hover:text-blue-400 transition-colors"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+
+      </button>
+
+      <!-- Error -->
+      <div *ngIf="errorMessage"
+           class="mx-2 mt-3 p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-center">
+        <p class="text-red-400 text-xs">{{ errorMessage }}</p>
+      </div>
+
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────────── -->
+    <div class="bg-[#12151b] px-6 py-3 flex justify-end border-t border-gray-800 flex-none">
+      <button
+        (click)="close()"
+        class="btn btn-ghost btn-sm text-gray-400 hover:text-white font-normal">
+        Cancelar
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Backdrop -->
+  <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-sm">
+    <button>close</button>
+  </form>
+
+</dialog>

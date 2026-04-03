@@ -28,5 +28,11 @@ export class ChatsService {
   markAsRead(conversationId: number): Observable<void> {
     return this.http.post<void>(`${environment.baseUrl}/conversations/${conversationId}/read`, {});
   }
+  startDirectConversation(targetUserId: number): Observable<ChatListItem> {
+    return this.http.post<ChatListItem>(
+      `${this.apiUrl}/direct?targetUserId=${targetUserId}`,
+      {}
+    );
+  }
 
 }

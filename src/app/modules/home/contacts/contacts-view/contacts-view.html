@@ -49,7 +49,13 @@
         <div class="dropdown dropdown-bottom dropdown-end">
 
           <button class="btn btn-square btn-ghost" (click)="toggleMenu(contact.id)">
-            <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            <!-- Spinner mientras se inicia conversación con este contacto -->
+            <span *ngIf="startingConversationId === contact.contactUserId"
+                  class="loading loading-spinner loading-sm">
+            </span>
+            <!-- Icono normal -->
+            <svg *ngIf="startingConversationId !== contact.contactUserId"
+              class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="5" r="1"></circle>
               <circle cx="12" cy="12" r="1"></circle>
@@ -59,7 +65,18 @@
 
           <ul *ngIf="openMenuContactId === contact.id"
             class="dropdown-content z-[999] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
-            <li><a>💬 Iniciar conversación</a></li>
+            <!-- FUNCIONAL: Iniciar conversación -->
+            <li>
+              <a (click)="startConversation(contact)"
+                 class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Iniciar conversación
+              </a>
+            </li>
             <li><a>👤 Ver perfil</a></li>
             <li><a class="text-error">🗑️ Eliminar</a></li>
           </ul>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ChatListItem } from '../../../core/models/chatsList.model';
 import { ChatsService } from '../../../core/services/chats/chats.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
@@ -8,11 +8,12 @@ import { Subscription } from 'rxjs';
 import { CryptoService } from '../../../core/services/crypto/crypto.service';
 import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { StartChat } from '../contacts/start-chat/start-chat';
 
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,StartChat],
   templateUrl: './chat-list.html',
   styleUrl: './chat-list.css',
 })
@@ -25,6 +26,9 @@ export class ChatList implements OnInit,OnDestroy{
   private wsService = inject(WebsocketService);
   private authService = inject(AuthService);
 
+  // Referencia al modal de nueva conversación
+  @ViewChild(StartChat) startChatChild!: StartChat;
+
   // Suscripciones
   private refreshSub!: Subscription;
   private userTopicSub: Subscription | null = null;
@@ -32,6 +36,8 @@ export class ChatList implements OnInit,OnDestroy{
   chats: ChatListItem[] = [];
   isLoading = true;
   selectedChatId: number | null = null;
+  /** Controla la visibilidad del mini-menú "+" */
+  showNewChatMenu = false;
 
   ngOnInit() {
     this.loadChats();
@@ -50,6 +56,26 @@ export class ChatList implements OnInit,OnDestroy{
     if (this.userTopicSub) {
       this.userTopicSub.unsubscribe();
     }
+  }
+  // ─── Menú nueva conversación ─────────────────────────────────────────────────
+
+  toggleNewChatMenu(): void {
+    this.showNewChatMenu = !this.showNewChatMenu;
+  }
+
+  /** Cierra el menú si el usuario hace clic fuera de él */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.new-chat-menu-wrapper')) {
+      this.showNewChatMenu = false;
+    }
+  }
+
+  openStartIndividualChat(): void {
+    this.showNewChatMenu = false;
+    // Pequeño delay para que el menú cierre antes de que el modal se abra
+    setTimeout(() => this.startChatChild.show(), 50);
   }
 
   private subscribeToMyUpdates() {
@@ -82,12 +108,11 @@ export class ChatList implements OnInit,OnDestroy{
              // CORRECCIÓN: Usamos la llave pública que YA tenemos en chatToUpdate
              if (chatToUpdate.otherUserPublicKey) {
                 try {
-                    const plainText = await this.cryptoService.decrypt(
+                    chatToUpdate.lastMessage = await this.cryptoService.decrypt(
                         incomingMsg.content,
                         incomingMsg.iv,
                         chatToUpdate.otherUserPublicKey // <--- FALTABA ESTO
                     );
-                    chatToUpdate.lastMessage = plainText;
                     chatToUpdate.lastMessageIV = incomingMsg.iv;
                 } catch (e) {
                     chatToUpdate.lastMessage = 'Mensaje cifrado (Click para leer)';
@@ -129,12 +154,11 @@ export class ChatList implements OnInit,OnDestroy{
 
           if (chat.lastMessage && chat.lastMessageIV && chat.otherUserPublicKey) {
             try {
-              const plainText = await this.cryptoService.decrypt(
+              chat.lastMessage = await this.cryptoService.decrypt(
                   chat.lastMessage,
                   chat.lastMessageIV,
                   chat.otherUserPublicKey
               );
-              chat.lastMessage = plainText;
             } catch (error) {
               chat.lastMessage = 'Mensaje cifrado (Click para leer)';
             }
@@ -156,12 +180,11 @@ export class ChatList implements OnInit,OnDestroy{
             // CORRECCIÓN: Aplicamos la misma lógica que en refresh
             if (chat.lastMessage && chat.lastMessageIV && chat.otherUserPublicKey) {
                 try {
-                    const plainText = await this.cryptoService.decrypt(
+                    chat.lastMessage= await this.cryptoService.decrypt(
                         chat.lastMessage,
                         chat.lastMessageIV,
                         chat.otherUserPublicKey // <--- FALTABA ESTO EN TU CÓDIGO ANTERIOR
                     );
-                    chat.lastMessage = plainText;
                 } catch (error) {
                     chat.lastMessage = '🔒 Mensaje ilegible';
                 }
@@ -189,11 +212,10 @@ export class ChatList implements OnInit,OnDestroy{
 
   formatTime(dateString: string): string {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  trackByChatId(index: number, chat: ChatListItem): number {
+  trackByChatId(_index: number, chat: ChatListItem): number {
     return chat.id;
   }
 
