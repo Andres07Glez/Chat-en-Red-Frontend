@@ -104,4 +104,22 @@ export class ContactsViewComponent implements OnInit {
       }
     });
   }
+  deleteContact(contactId: number): void {
+    console.log('¡El botón sí funciona! Intentando eliminar ID:', contactId);
+    const confirmar = confirm('¿Estás seguro de que deseas eliminar a este contacto?');
+
+    if (confirmar) {
+      this.contactService.deleteContact(contactId).subscribe({
+        next: () => {
+          // Se quita al contacto del arreglo para que desaparezca visualmente
+          this.contacts = this.contacts.filter(contacto => contacto.id !== contactId);
+          this.openMenuContactId = null;
+        },
+        error: (error) => {
+          console.error('Error al eliminar el contacto:', error);
+          alert('Hubo un problema al eliminar el contacto. Inténtalo de nuevo.');
+        }
+      });
+    }
+  }
 }

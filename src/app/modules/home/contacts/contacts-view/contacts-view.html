@@ -43,7 +43,7 @@
         <div class="flex-grow">
           <div class="font-medium">{{ contact.contactName }}</div>
           <div class="text-xs uppercase font-semibold opacity-60">
-            {{ contact.contactStatusName }}
+            {{ contact.contactEmail }}
           </div>
         </div>
 
@@ -91,7 +91,8 @@
             </li>
             <li>
               <button class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-error
-                             hover:bg-error/10 transition-colors text-left">
+                             hover:bg-error/10 transition-colors text-left"
+                             (mousedown)="deleteContact(contact.id); $event.stopPropagation()">
                 🗑️ Eliminar
               </button>
             </li>

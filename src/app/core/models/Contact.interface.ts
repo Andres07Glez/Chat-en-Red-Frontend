@@ -11,4 +11,6 @@ export interface ContactResponse {
   contactAvatarUrl?: string; // El signo '?' es porque puede venir null
   
   updatedAt: string;
+
+  contactEmail: string; // <-- Agrega esto
 }
