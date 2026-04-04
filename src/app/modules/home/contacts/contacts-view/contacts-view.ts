@@ -51,7 +51,7 @@ export class ContactsViewComponent implements OnInit {
     this.openMenuContactId = this.openMenuContactId === contactId ? null : contactId;
   }
 
-  loadContacts(): void {
+  /*loadContacts(): void {
     this.isLoading = true;
     this.contactService.getMyContacts().subscribe({
       next: (data) => {
@@ -64,5 +64,61 @@ export class ContactsViewComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }*/
+
+//   loadContacts(): void {
+//     this.isLoading = true;
+//     this.contactService.getMyContacts().subscribe({
+//       next: (data) => {
+//         // AQUÍ ESTÁ LA MAGIA: 
+//         // Le decimos que de toda la 'data', solo nos guarde los que tienen ID de estado 2
+//         this.contacts = data.filter(contacto => contacto.contactStatusId === 2);
+        
+//         this.isLoading = false;
+//         console.log('Contactos cargados de BD:', data);
+//         console.log('Contactos filtrados (solo aceptados):', this.contacts);
+//       },
+//       error: (error) => {
+//         console.error('Error al cargar contactos:', error);
+//         this.isLoading = false;
+//       }
+//     });
+//   }
+
+  loadContacts(): void {
+    this.isLoading = true;
+    this.contactService.getMyContacts().subscribe({
+      next: (data) => {
+        // Asignamos directamente la data porque el backend ya hizo el filtro
+        this.contacts = data;
+        
+        this.isLoading = false;
+        console.log('Contactos cargados y filtrados desde el servidor:', this.contacts);
+      },
+      error: (error) => {
+        console.error('Error al cargar contactos:', error);
+        this.isLoading = false;
+      }
+    });
   }
+
+  deleteContact(contactId: number): void {
+    console.log('¡El botón sí funciona! Intentando eliminar ID:', contactId);
+    const confirmar = confirm('¿Estás seguro de que deseas eliminar a este contacto?');
+    
+    if (confirmar) {
+      this.contactService.deleteContact(contactId).subscribe({
+        next: () => {
+          // Se quita al contacto del arreglo para que desaparezca visualmente
+          this.contacts = this.contacts.filter(contacto => contacto.id !== contactId);
+          this.openMenuContactId = null; 
+        },
+        error: (error) => {
+          console.error('Error al eliminar el contacto:', error);
+          alert('Hubo un problema al eliminar el contacto. Inténtalo de nuevo.');
+        }
+      });
+    }
+  }
+
 }

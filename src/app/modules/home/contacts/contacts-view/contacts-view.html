@@ -42,7 +42,7 @@
         <div class="flex-grow">
           <div class="font-medium">{{ contact.contactName }}</div>
           <div class="text-xs uppercase font-semibold opacity-60">
-            {{ contact.contactStatusName }}
+            {{ contact.contactEmail }}
           </div>
         </div>
 
@@ -61,7 +61,8 @@
             class="dropdown-content z-[999] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
             <li><a>💬 Iniciar conversación</a></li>
             <li><a>👤 Ver perfil</a></li>
-            <li><a class="text-error">🗑️ Eliminar</a></li>
+            <!-- <li><a class="text-error cursor-pointer" (click)="deleteContact(contact.id)">🗑️ Eliminar</a></li> -->
+            <li><a class="text-error cursor-pointer" (mousedown)="deleteContact(contact.id); $event.stopPropagation()">🗑️ Eliminar</a></li>
           </ul>
         </div>
       </li>

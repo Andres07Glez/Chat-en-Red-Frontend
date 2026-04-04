@@ -33,4 +33,9 @@ export class ContactService {
       { params }
     );
   }
+
+  deleteContact(contactId: number): Observable<any> {
+    // Apunta al endpoint @DeleteMapping("/del/{id}") de tu ContactController
+    return this.http.delete(`${this.apiUrl}/del/${contactId}`);
+  }
 }
