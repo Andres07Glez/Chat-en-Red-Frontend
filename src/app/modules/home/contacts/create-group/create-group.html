@@ -1,0 +1,215 @@
+<dialog #createGroupModal class="modal">
+
+  <div class="modal-box w-full max-w-md p-0 bg-[#151921] border border-gray-800 text-gray-200 overflow-hidden flex flex-col"
+       style="max-height: 90vh;">
+
+    <!-- ── Header ──────────────────────────────────────────────────── -->
+    <div class="px-6 pt-6 pb-4 flex justify-between items-start flex-none border-b border-gray-800/60">
+      <div>
+        <h3 class="font-bold text-2xl text-white">Nuevo grupo</h3>
+        <p class="text-sm text-gray-500 mt-0.5">
+          Selecciona miembros y ponle nombre al grupo
+        </p>
+      </div>
+      <button (click)="close()"
+              class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:text-white hover:bg-white/10 mt-1">
+        ✕
+      </button>
+    </div>
+
+    <!-- ── Cuerpo scrollable ─────────────────────────────────────────── -->
+    <div class="flex-1 overflow-y-auto">
+
+      <!-- Título del grupo -->
+      <div class="px-6 pt-5 pb-3">
+        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          Nombre del grupo
+        </label>
+        <div class="flex items-center gap-2 bg-[#1d232a] rounded-lg border border-gray-700
+                    focus-within:border-blue-500 transition-colors px-3 h-11">
+          <!-- Ícono de grupo -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 flex-none" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="groupTitle"
+            placeholder="Ej: Proyecto final, Familia, etc."
+            maxlength="60"
+            class="bg-transparent border-none focus:outline-none text-white text-sm w-full placeholder-gray-600"
+          />
+          <span class="text-xs text-gray-600 flex-none">{{ groupTitle.length }}/60</span>
+        </div>
+      </div>
+
+      <!-- Chips de miembros seleccionados -->
+      <div *ngIf="selectedCount > 0" class="px-6 pb-3">
+        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          {{ selectedCount }} {{ selectedCount === 1 ? 'miembro' : 'miembros' }} seleccionados
+        </label>
+        <div class="flex flex-wrap gap-2">
+          <div *ngFor="let contact of selectedContacts"
+               class="flex items-center gap-1.5 bg-blue-600/20 border border-blue-500/30
+                      text-blue-300 rounded-full px-3 py-1 text-xs font-medium">
+            <span class="w-4 h-4 rounded-full bg-blue-500/40 flex items-center justify-center
+                         text-blue-200 text-xs font-bold flex-none">
+              {{ contact.contactName.charAt(0).toUpperCase() }}
+            </span>
+            <span class="truncate max-w-[100px]">{{ contact.contactName }}</span>
+            <button (click)="removeSelected(contact.contactUserId)"
+                    class="text-blue-400 hover:text-white transition-colors ml-0.5 flex-none"
+                    title="Quitar">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buscador de contactos -->
+      <div class="px-6 pb-3">
+        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          Contactos
+        </label>
+        <div class="flex items-center gap-2 bg-[#1d232a] rounded-lg border border-gray-700
+                    focus-within:border-blue-500 transition-colors px-3 h-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 flex-none" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="filterContacts()"
+            placeholder="Buscar contacto..."
+            class="bg-transparent border-none focus:outline-none text-white text-sm w-full placeholder-gray-600"
+          />
+        </div>
+      </div>
+
+      <!-- Lista de contactos -->
+      <div class="px-3 pb-4">
+
+        <!-- Cargando -->
+        <div *ngIf="isLoadingContacts" class="flex justify-center py-8">
+          <span class="loading loading-spinner text-primary loading-md"></span>
+        </div>
+
+        <!-- Sin contactos -->
+        <div *ngIf="!isLoadingContacts && contacts.length === 0"
+             class="flex flex-col items-center justify-center gap-2 py-8 text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-40" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <p class="text-sm font-medium">No tienes contactos aún</p>
+        </div>
+
+        <!-- Sin resultados de búsqueda -->
+        <div *ngIf="!isLoadingContacts && contacts.length > 0 && filteredContacts.length === 0"
+             class="text-center text-gray-500 text-sm py-6">
+          Sin resultados para "<span class="text-gray-300">{{ searchQuery }}</span>"
+        </div>
+
+        <!-- Cada contacto -->
+        <label
+          *ngFor="let contact of filteredContacts"
+          class="flex items-center gap-3 px-3 py-3 rounded-xl transition-all cursor-pointer group"
+          [class.bg-blue-600]="isSelected(contact.contactUserId)"
+          [class.bg-opacity-10]="isSelected(contact.contactUserId)"
+          [class.hover:bg-white]="!isSelected(contact.contactUserId)"
+          [class.hover:bg-opacity-5]="!isSelected(contact.contactUserId)">
+
+          <!-- Checkbox oculto (accesibilidad) -->
+          <input type="checkbox"
+                 class="hidden"
+                 [checked]="isSelected(contact.contactUserId)"
+                 (change)="toggleContact(contact)" />
+
+          <!-- Indicador de selección / Avatar -->
+          <div class="flex-none w-10 h-10 relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shadow transition-all"
+                 [class.bg-blue-600]="isSelected(contact.contactUserId)"
+                 [class.bg-neutral]="!isSelected(contact.contactUserId)"
+                 [class.text-white]="isSelected(contact.contactUserId)"
+                 [class.text-neutral-content]="!isSelected(contact.contactUserId)">
+              <ng-container *ngIf="!isSelected(contact.contactUserId)">
+                {{ contact.contactName.charAt(0).toUpperCase() }}
+              </ng-container>
+              <!-- Checkmark cuando está seleccionado -->
+              <svg *ngIf="isSelected(contact.contactUserId)"
+                   xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0" (click)="toggleContact(contact)">
+            <p class="font-semibold text-sm text-white truncate leading-tight">
+              {{ contact.contactName }}
+            </p>
+            <p class="text-xs text-gray-500 truncate mt-0.5">
+              {{ contact.contactStatusName }}
+            </p>
+          </div>
+
+        </label>
+
+        <!-- Error -->
+        <div *ngIf="errorMessage"
+             class="mx-2 mt-3 p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-center">
+          <p class="text-red-400 text-xs">{{ errorMessage }}</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
+    <div class="flex-none bg-[#12151b] px-6 py-4 flex justify-between items-center border-t border-gray-800">
+
+      <button (click)="close()"
+              class="btn btn-ghost btn-sm text-gray-400 hover:text-white font-normal">
+        Cancelar
+      </button>
+
+      <button
+        (click)="createGroup()"
+        [disabled]="!canCreate"
+        class="btn btn-primary btn-sm px-5 text-white font-semibold gap-2
+               disabled:opacity-40 disabled:cursor-not-allowed">
+
+        <!-- Spinner mientras crea -->
+        <span *ngIf="isCreating" class="loading loading-spinner loading-xs"></span>
+
+        <!-- Ícono cuando no está cargando -->
+        <svg *ngIf="!isCreating" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4v16m8-8H4" />
+        </svg>
+
+        <span>{{ isCreating ? 'Creando...' : 'Crear grupo' }}</span>
+        <span *ngIf="!isCreating && selectedCount > 0"
+              class="badge badge-sm bg-white/20 text-white border-0 font-normal">
+          {{ selectedCount + 1 }}
+        </span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- Backdrop -->
+  <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-sm">
+    <button>close</button>
+  </form>
+
+</dialog>

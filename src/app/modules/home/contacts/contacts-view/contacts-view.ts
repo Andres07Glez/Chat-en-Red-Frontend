@@ -4,7 +4,8 @@ import {
   ViewChild,
   Output,
   EventEmitter,
-  inject
+  inject,
+  HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -38,12 +39,21 @@ export class ContactsViewComponent implements OnInit {
   contacts: ContactResponse[] = [];
   isLoading: boolean = true;
   openMenuContactId: number | null = null;
-
   /** ID del contacto cuya conversación se está iniciando (para feedback visual) */
   startingConversationId: number | null = null;
 
   ngOnInit(): void {
     this.loadContacts();
+  }
+  // ── Cerrar menú al hacer clic fuera ──────────────────────────────────────
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    // Si el clic no fue dentro de un elemento con [data-contact-menu], cerramos
+    if (!target.closest('[data-contact-menu]')) {
+      this.openMenuContactId = null;
+    }
   }
 
   // ── Acciones del header ────────────────────────────────────────────────────

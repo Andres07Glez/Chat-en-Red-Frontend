@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatListItem } from '../../models/chatsList.model';
 import { MessageResponse } from '../../models/message.model';
+import { ConversationKeyResponse, CreateGroupRequest } from '../../models/group.model';
 
 @Injectable({
   providedIn: 'root'
@@ -33,6 +34,13 @@ export class ChatsService {
       `${this.apiUrl}/direct?targetUserId=${targetUserId}`,
       {}
     );
+  }
+  createGroup(request: CreateGroupRequest): Observable<ChatListItem> {
+    return this.http.post<ChatListItem>(`${this.apiUrl}/group`, request);
+  }
+
+  getMyConversationKey(conversationId: number): Observable<ConversationKeyResponse> {
+    return this.http.get<ConversationKeyResponse>(`${this.apiUrl}/${conversationId}/my-key`);
   }
 
 }

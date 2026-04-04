@@ -57,20 +57,17 @@
               </button>
             </li>
 
-            <!-- Grupo (próximamente) -->
+            <!-- Nuevo Grupo -->
             <li>
               <button
-                disabled
-                class="w-full flex items-center gap-3 px-4 py-3 text-sm opacity-40 cursor-not-allowed text-left">
+                (click)="openCreateGroup()"
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-base-200 transition-colors text-left">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-none" fill="none"
                      viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <div class="flex flex-col">
-                  <span class="font-medium leading-tight">Grupo</span>
-                  <span class="text-xs opacity-60">Próximamente</span>
-                </div>
+                <span class="font-medium">Nuevo Grupo</span>
               </button>
             </li>
 
@@ -131,7 +128,16 @@
 
         <div class="flex-1 min-w-0">
           <div class="flex justify-between items-baseline mb-1">
-            <h3 class="font-semibold text-base-content truncate">{{ chat.name }}</h3>
+
+            <div class="flex items-center gap-1.5 min-w-0">
+              <!-- Badge de grupo -->
+              <span *ngIf="chat.isGroup"
+                    class="text-xs px-1.5 py-0.5 rounded bg-secondary/15 text-secondary
+                           font-semibold uppercase tracking-wide flex-none">
+                Grupo
+              </span>
+              <h3 class="font-semibold text-base-content truncate">{{ chat.name }}</h3>
+            </div>
             <span class="text-xs text-base-content/60 whitespace-nowrap ml-2">
               {{ formatTime(chat.lastActivity) }}
             </span>
@@ -153,5 +159,7 @@
 
     <!-- Modal de nueva conversación (hijo) -->
     <app-start-chat></app-start-chat>
+    <app-create-group></app-create-group>
+
 
 </div>

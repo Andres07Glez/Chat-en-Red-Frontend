@@ -6,7 +6,7 @@ import { ChatsService } from '../../../core/services/chats/chats.service';
 import { FormsModule } from '@angular/forms';
 import { ChatStateService } from '../../../core/services/chats/chat-state.service';
 import { CryptoService } from '../../../core/services/crypto/crypto.service';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user/user.service';
@@ -20,126 +20,261 @@ import { UserService } from '../../../core/services/user/user.service';
 })
 export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   @Input() chatData!: ChatListItem; // Recibimos el chat seleccionado del padre
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   private chatService = inject(ChatsService);
   private chatState = inject(ChatStateService);
   private cryptoService = inject(CryptoService);
   private wsService = inject(WebsocketService);
   private authService=inject(AuthService);
-  private chatSubscription: Subscription | null = null;
   private userService = inject(UserService);
 
-  newMessageText: string = ''; // Variable vinculada al input
-  isSending = false;
+  private chatSubscription: Subscription | null = null;
 
   messages: MessageResponse[] = [];
+  newMessageText: string = ''; // Variable vinculada al input
+  isSending = false;
   isLoading = false;
 
-  // Referencia al contenedor de mensajes para hacer scroll automático
-  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  private groupKey: CryptoKey | null = null;
+  isLoadingGroupKey = false;
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['chatData'] && this.chatData) {
-      // 1. Si había un chat previo cargado, guardamos su borrador antes de cambiar
-      const prevChat = changes['chatData'].previousValue;
-      if (prevChat) {
-         this.chatState.setDraft(prevChat.id, this.newMessageText);
-      }
+    if (!changes['chatData'] || !this.chatData) return;
 
+    const prevChat = changes['chatData'].previousValue;
+    if (prevChat) this.chatState.setDraft(prevChat.id, this.newMessageText);
+
+    // Resetear estado para el nuevo chat
+    this.groupKey   = null;
+    this.messages   = [];
+    this.newMessageText = this.chatState.getDraft(this.chatData.id);
+
+    this.subscribeToRealTimeMessages();
+
+    if (this.chatData.isGroup) {
+      this.loadGroupKeyThenMessages();
+    } else {
       this.refreshPublicKey();
-      // 2. Cargamos el nuevo chat
-      // Recuperamos si había algo escrito
-      this.newMessageText = this.chatState.getDraft(this.chatData.id);
       this.loadMessages();
-      this.subscribeToRealTimeMessages();
-
     }
   }
-  private refreshPublicKey() {
-    // Solo si es chat directo y tenemos el ID del otro usuario
-    if (!this.chatData.isGroup && this.chatData.otherUserId) {
-      this.userService.getPublicKey(this.chatData.otherUserId).subscribe({
-        next: (res) => {
-          if (res.publicKey && res.publicKey !== this.chatData.otherUserPublicKey) {
-            console.log(' Llave pública actualizada detectada.');
-            this.chatData.otherUserPublicKey = res.publicKey;
-            // Opcional: Podrías volver a llamar a loadMessages() si quieres reintentar descifrar mensajes fallidos
-            this.loadMessages();
-          }
-        },
-        error: (err) => console.error('Error actualizando llave', err)
-      });
-    }
+  // Scroll automático al último mensaje
+  ngAfterViewChecked() {
+    this.scrollToBottom();
   }
-  // Método helper para guardar
-  private saveDraft() {
-    if (this.chatData) {
-      this.chatState.setDraft(this.chatData.id, this.newMessageText);
-    }
-  }
-  private subscribeToRealTimeMessages() {
-    // Primero nos desconectamos del chat anterior si existía
-    this.unsubscribeChat();
 
-    // El topic debe coincidir con el Backend: "/topic/chat/{id}"
-    const topic = `/topic/chat/${this.chatData.id}`;
-    // Obtenemos mi usuario actual para comparar
-    const currentUser = this.authService.getUser();
-
-    this.chatSubscription = this.wsService.watch(topic).subscribe({
-      next: async (message) => {
-        // 'message.body' es el JSON String que envía el backend
-        const msgReceived = JSON.parse(message.body);
-
-        const alreadyExists = this.messages.some(m => m.id === msgReceived.id);
-        if (alreadyExists) return;
-        // El backend manda 'isMine=false' para broadcast general.
-        // Aquí corregimos: Si el nombre del remitente soy YO, entonces es mío.
-        if (currentUser && msgReceived.senderName === currentUser.username) {
-            msgReceived.isMine = true;
-        }
-        if (!this.chatData.otherUserPublicKey) {
-            alert('Error: No se puede cifrar el mensaje porque el destinatario no tiene claves de seguridad generadas.');
-            return;
-        }
-
-        // DESCIFRADO EN TIEMPO REAL
-        if (msgReceived.messageTypeCode === 'TEXT' && msgReceived.iv) {
-           try {
-             msgReceived.content = await this.cryptoService.decrypt(msgReceived.content, msgReceived.iv,this.chatData.otherUserPublicKey);
-           } catch (e) {
-             console.error('Error descifrando mensaje vivo');
-           }
-        }
-
-        // Agregar al array visual
-        this.messages.push(msgReceived);
-        // 2. === LÓGICA DE MARCAR LEÍDO AUTOMÁTICO ===
-        // Si el mensaje llegó a ESTE chat que tengo abierto, aviso al backend que ya lo leí.
-        if (this.chatData && this.chatData.id === msgReceived.conversationId) {
-            this.chatService.markAsRead(this.chatData.id).subscribe({
-                next: () => console.log(' Visto confirmado por Backend'),
-                error: (err) => console.error('Error marcando leído', err)
-            });
-        }
-
-        // Scroll y avisar al sidebar
-        setTimeout(() => this.scrollToBottom(), 50);
-        this.chatState.triggerRefresh();
-      },
-      error: (err) => console.error('Error WS', err)
-    });
-  }
   ngOnDestroy() {
     this.unsubscribeChat(); // Limpieza al destruir componente
-    this.saveDraft();
-
+    if (this.chatData) this.chatState.setDraft(this.chatData.id, this.newMessageText);
   }
-  onInputText() {
-    if (this.chatData) {
-        this.chatState.setDraft(this.chatData.id, this.newMessageText);
+
+  private async loadGroupKeyThenMessages(): Promise<void> {
+    this.isLoadingGroupKey = true;
+    this.isLoading         = true;
+
+    try {
+      // 1. Intentar desde caché (evita una petición HTTP en revisitas)
+      const cached = this.cryptoService.getGroupKey(this.chatData.id);
+      if (cached) {
+        this.groupKey = cached;
+      } else {
+        // 2. Fetch desde backend y descifrar
+        const keyData = await firstValueFrom(
+          this.chatService.getMyConversationKey(this.chatData.id)
+        );
+        this.groupKey = await this.cryptoService.decryptGroupKey(
+          keyData.encryptedKey,
+          keyData.iv,
+          keyData.creatorPublicKey
+        );
+        // 3. Guardar en caché para la lista de chats y futuras visitas
+        this.cryptoService.storeGroupKey(this.chatData.id, this.groupKey);
+      }
+
+      this.loadMessages();
+    } catch (err) {
+      console.error('Error cargando llave de grupo:', err);
+      this.isLoading = false;
+    } finally {
+      this.isLoadingGroupKey = false;
     }
   }
+  loadMessages() {
+    this.isLoading = true;
+
+    if (this.chatData.isGroup && !this.groupKey) {
+      // Seguridad: no cargar mensajes sin llave de grupo
+      this.isLoading = false;
+      return;
+    }
+
+    if (!this.chatData.isGroup && !this.chatData.otherUserPublicKey) {
+      console.warn('Chat directo sin llave pública — no se pueden descifrar mensajes.');
+      this.isLoading = false;
+      return;
+    }
+
+    this.chatService.getMessages(this.chatData.id).subscribe({
+      next: async (data) => {
+        this.messages  = await this.decryptMessages(data);
+        this.isLoading = false;
+        this.scrollToBottom();
+      },
+      error: (err) => {
+        console.error('Error cargando mensajes:', err);
+        this.isLoading = false;
+      }
+    });
+  }
+  private async decryptMessages(messages: MessageResponse[]): Promise<MessageResponse[]> {
+    return Promise.all(messages.map(async (msg) => {
+      if (msg.messageTypeCode !== 'TEXT' || !msg.iv) return msg;
+      try {
+        if (this.chatData.isGroup && this.groupKey) {
+          msg.content = await this.cryptoService.decryptWithGroupKey(
+            msg.content, msg.iv, this.groupKey
+          );
+        } else if (!this.chatData.isGroup && this.chatData.otherUserPublicKey) {
+          msg.content = await this.cryptoService.decrypt(
+            msg.content, msg.iv, this.chatData.otherUserPublicKey
+          );
+        }
+      } catch {
+        msg.content = '🔒 Mensaje ilegible';
+      }
+      return msg;
+    }));
+  }
+  private subscribeToRealTimeMessages() {
+      // Primero nos desconectamos del chat anterior si existía
+      this.unsubscribeChat();
+      const currentUser = this.authService.getUser();
+      // El topic debe coincidir con el Backend: "/topic/chat/{id}"
+      const topic = `/topic/chat/${this.chatData.id}`;
+      // Obtenemos mi usuario actual para comparar
+
+      this.chatSubscription = this.wsService.watch(topic).subscribe({
+        next: async (message) => {
+          // 'message.body' es el JSON String que envía el backend
+          const msgReceived = JSON.parse(message.body);
+
+          // Deduplicación: ignorar si ya procesamos este ID
+          if (this.messages.some(m => m.id === msgReceived.id)) return;
+          // El backend manda 'isMine=false' para broadcast general.
+          // Aquí corregimos: Si el nombre del remitente soy YO, entonces es mío.
+          if (currentUser && msgReceived.senderName === currentUser.username) {
+              msgReceived.isMine = true;
+          }
+          // Descifrar el contenido entrante
+          if (msgReceived.messageTypeCode === 'TEXT' && msgReceived.iv) {
+            try {
+              if (this.chatData.isGroup && this.groupKey) {
+                msgReceived.content = await this.cryptoService.decryptWithGroupKey(
+                  msgReceived.content, msgReceived.iv, this.groupKey
+                );
+              } else if (!this.chatData.isGroup && this.chatData.otherUserPublicKey) {
+                msgReceived.content = await this.cryptoService.decrypt(
+                  msgReceived.content, msgReceived.iv, this.chatData.otherUserPublicKey
+                );
+              }
+            } catch {
+              msgReceived.content = '🔒 Mensaje cifrado';
+            }
+          }
+
+          this.messages.push(msgReceived);
+
+          // Marcar como leído si este chat está activo
+          if (this.chatData.id === msgReceived.conversationId) {
+            this.chatService.markAsRead(this.chatData.id).subscribe();
+          }
+
+          setTimeout(() => this.scrollToBottom(), 50);
+          this.chatState.triggerRefresh();
+        },
+        error: (err) => console.error('Error WS chat:', err)
+      });
+  }
+  async sendMessage() {
+      if (!this.newMessageText.trim() || !this.chatData || this.isSending) return;
+
+      // Validaciones de cifrado
+      if (this.chatData.isGroup && !this.groupKey) {
+        alert('La llave del grupo aún no está lista. Espera un momento.');
+        return;
+      }
+      if (!this.chatData.isGroup && !this.chatData.otherUserPublicKey) {
+        alert('El destinatario no tiene llaves de seguridad. No se puede enviar.');
+        return;
+      }
+
+      this.isSending = true;
+
+      try {
+        let encryptedData: { content: string; iv: string };
+
+        if (this.chatData.isGroup && this.groupKey) {
+          encryptedData = await this.cryptoService.encryptWithGroupKey(
+            this.newMessageText, this.groupKey
+          );
+        } else {
+          encryptedData = await this.cryptoService.encrypt(
+            this.newMessageText, this.chatData.otherUserPublicKey!
+          );
+        }
+
+        const request = {
+          conversationId:  this.chatData.id,
+          content:         encryptedData.content,
+          messageTypeCode: 'TEXT',
+          iv:              encryptedData.iv
+        };
+
+        this.chatService.sendMessage(request).subscribe({
+          next: () => {
+            this.newMessageText = '';
+            this.chatState.setDraft(this.chatData.id, '');
+            this.isSending = false;
+          },
+          error: (err) => {
+            console.error('Error enviando mensaje:', err);
+            this.isSending = false;
+          }
+        });
+
+      } catch (error) {
+        console.error('Error de encriptación:', error);
+        this.isSending = false;
+      }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // Evita el salto de línea
+      this.sendMessage();
+    }
+  }
+  onInputText() {
+    if (this.chatData) this.chatState.setDraft(this.chatData.id, this.newMessageText);
+  }
+
+  // ── Refresh de llave pública (chat directo) ───────────────────────────────
+  private refreshPublicKey() {
+    if (this.chatData.isGroup || !this.chatData.otherUserId) return;
+
+    this.userService.getPublicKey(this.chatData.otherUserId).subscribe({
+      next: (res) => {
+        if (res.publicKey && res.publicKey !== this.chatData.otherUserPublicKey) {
+          this.chatData.otherUserPublicKey = res.publicKey;
+          this.loadMessages();
+        }
+      },
+      error: (err) => console.error('Error actualizando llave pública:', err)
+    });
+  }
+
+  // ── Helpers de UI ────────────────────────────────────────────────────────
   private unsubscribeChat() {
     if (this.chatSubscription) {
       this.chatSubscription.unsubscribe();
@@ -147,99 +282,19 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
     }
   }
 
-  loadMessages() {
-    this.isLoading = true;
-    // Verificamos si tenemos la llave del otro usuario
-    if (!this.chatData.otherUserPublicKey) {
-        console.warn('Este chat no tiene llave pública (¿Usuario nuevo?). No se podrán leer mensajes.');
-        return;
-    }
-    const remoteKey = this.chatData.otherUserPublicKey;
-    this.chatService.getMessages(this.chatData.id).subscribe({
-      next: async (data) => {
-        // DESCIFRADO MASIVO
-        // Procesamos todos los mensajes cifrados
-        const decryptedMessages = await Promise.all(data.map(async (msg) => {
-            // Solo intentamos descifrar si es texto y tiene IV
-            if (msg.messageTypeCode === 'TEXT' && msg.iv) {
-                const plainText = await this.cryptoService.decrypt(msg.content, msg.iv,remoteKey);
-                msg.content = plainText;
-            }
-            return msg;
-        }));
-        this.messages = decryptedMessages;
-        this.isLoading = false;
-        this.scrollToBottom();
-      },
-      error: (err) => console.error(err)
-    });
-  }
-
-  // Scroll automático al último mensaje
-  ngAfterViewChecked() {
-    this.scrollToBottom();
-  }
-
   scrollToBottom(): void {
     try {
-        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-    } catch(err) { }
+      this.scrollContainer.nativeElement.scrollTop =
+        this.scrollContainer.nativeElement.scrollHeight;
+    } catch { /* Ignorar si el elemento no existe todavía */ }
   }
 
   // Helper para hora
   formatTime(isoDate: string): string {
     return new Date(isoDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  async sendMessage() {
-    if (!this.newMessageText.trim() || !this.chatData) return;
-    // VALIDACIÓN DE SEGURIDAD
-    if (!this.chatData.otherUserPublicKey) {
-        alert('Error: No se puede cifrar el mensaje porque el destinatario no tiene claves de seguridad generadas.');
-        return;
-    }
 
-    this.isSending = true;
-    try{
-      const encryptedData = await this.cryptoService.encrypt(this.newMessageText,this.chatData.otherUserPublicKey);
-      const request = {
-        conversationId: this.chatData.id,
-        content: encryptedData.content, // <--- AQUÍ CIFRAREMOS DESPUÉS
-        messageTypeCode: 'TEXT',
-        iv: encryptedData.iv // IV temporal
-      };
 
-      this.chatService.sendMessage(request).subscribe({
-        next: (msgResponse) => {
-          // 1. Agregamos el mensaje a la lista visualmente
-          // Truco visual: El backend devuelve el mensaje cifrado.
-                  // Nosotros ya sabemos qué decía, así que para mostrarlo rápido
-                  // y evitar descifrar lo que acabamos de cifrar:
-          //msgResponse.content = this.newMessageText;
-          //this.messages.push(msgResponse);
-          // 2. Limpiamos el input
-          this.newMessageText = '';
-          this.chatState.setDraft(this.chatData.id, ''); // Borrar draft tras enviar
-          this.isSending = false;
-          // 3. Scroll al final
-          //setTimeout(() => this.scrollToBottom(), 50);
-          //this.chatState.triggerRefresh();
-        },
-        error: (err) => {
-          console.error('Error enviando mensaje', err);
-          this.isSending = false;
-        }
-      });
-    } catch (error) {
-        console.error('Error de encriptación', error);
-        this.isSending = false;
-    }
-  }
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Evita el salto de línea
-      this.sendMessage();
-    }
-  }
   // 1. Detecta si debemos mostrar el separador antes del mensaje actual
   shouldShowDateSeparator(prevMsg: MessageResponse | null, currentMsg: MessageResponse): boolean {
     if (!prevMsg) return true; // El primer mensaje siempre lleva fecha

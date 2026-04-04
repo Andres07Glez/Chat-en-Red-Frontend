@@ -9,11 +9,12 @@ import { CryptoService } from '../../../core/services/crypto/crypto.service';
 import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { StartChat } from '../contacts/start-chat/start-chat';
+import { CreateGroup } from '../contacts/create-group/create-group';
 
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  imports: [CommonModule,StartChat],
+  imports: [CommonModule,StartChat,CreateGroup],
   templateUrl: './chat-list.html',
   styleUrl: './chat-list.css',
 })
@@ -28,6 +29,8 @@ export class ChatList implements OnInit,OnDestroy{
 
   // Referencia al modal de nueva conversación
   @ViewChild(StartChat) startChatChild!: StartChat;
+  @ViewChild(CreateGroup) createGroupChild!: CreateGroup;
+
 
   // Suscripciones
   private refreshSub!: Subscription;
@@ -50,12 +53,8 @@ export class ChatList implements OnInit,OnDestroy{
   }
 
   ngOnDestroy() {
-    if (this.refreshSub) {
-      this.refreshSub.unsubscribe();
-    }
-    if (this.userTopicSub) {
-      this.userTopicSub.unsubscribe();
-    }
+    if (this.refreshSub)   this.refreshSub.unsubscribe();
+    if (this.userTopicSub) this.userTopicSub.unsubscribe();
   }
   // ─── Menú nueva conversación ─────────────────────────────────────────────────
 
@@ -77,6 +76,10 @@ export class ChatList implements OnInit,OnDestroy{
     // Pequeño delay para que el menú cierre antes de que el modal se abra
     setTimeout(() => this.startChatChild.show(), 50);
   }
+  openCreateGroup(): void {
+    this.showNewChatMenu = false;
+    setTimeout(() => this.createGroupChild.show(), 50);
+  }
 
   private subscribeToMyUpdates() {
     const currentUser = this.authService.getUser();
@@ -92,10 +95,9 @@ export class ChatList implements OnInit,OnDestroy{
         if (chatIndex !== -1) {
           // === CASO A: EL CHAT YA ESTÁ EN LA LISTA ===
           const chatToUpdate = this.chats[chatIndex];
-
           chatToUpdate.lastActivity = incomingMsg.sentAt;
-          const isMine = incomingMsg.senderName === currentUser.username;
 
+          const isMine = incomingMsg.senderName === currentUser.username;
           // Actualizar contadores
           if (this.selectedChatId !== incomingMsg.conversationId && !isMine) {
             chatToUpdate.unreadCount = (chatToUpdate.unreadCount || 0) + 1;
@@ -105,23 +107,14 @@ export class ChatList implements OnInit,OnDestroy{
 
           // Actualizar mensaje (Desencriptando)
           if (incomingMsg.messageTypeCode === 'TEXT' && incomingMsg.iv) {
-             // CORRECCIÓN: Usamos la llave pública que YA tenemos en chatToUpdate
-             if (chatToUpdate.otherUserPublicKey) {
-                try {
-                    chatToUpdate.lastMessage = await this.cryptoService.decrypt(
-                        incomingMsg.content,
-                        incomingMsg.iv,
-                        chatToUpdate.otherUserPublicKey // <--- FALTABA ESTO
-                    );
-                    chatToUpdate.lastMessageIV = incomingMsg.iv;
-                } catch (e) {
-                    chatToUpdate.lastMessage = 'Mensaje cifrado (Click para leer)';
-                }
-             } else {
-                chatToUpdate.lastMessage = '🔒 Llave no disponible';
-             }
+            chatToUpdate.lastMessage = await this.decryptPreview(
+              chatToUpdate,
+              incomingMsg.content,
+              incomingMsg.iv
+            );
+            chatToUpdate.lastMessageIV = incomingMsg.iv;
           } else {
-             chatToUpdate.lastMessage = incomingMsg.messageTypeCode === 'IMAGE' ? '📷 Foto' : 'Archivo adjunto';
+            chatToUpdate.lastMessage = incomingMsg.messageTypeCode === 'IMAGE' ? '📷 Foto' : 'Archivo';
           }
 
           // Reordenar
@@ -140,61 +133,16 @@ export class ChatList implements OnInit,OnDestroy{
   refreshChatsSilent() {
     this.chatService.getMyChats().subscribe({
       next: async (data) => {
-        const decryptedChats = await Promise.all(data.map(async (chat) => {
-
-          // CORRECCIÓN PRINCIPAL:
-          // Si no hay llave, NO hacemos return; (undefined).
-          // Retornamos el chat tal cual con un aviso.
-          if (!chat.otherUserPublicKey && chat.isGroup === false) {
-             // Ojo: si es grupo (isGroup), es normal que venga null por ahora.
-             // Si es directo y viene null, es error.
-             if (chat.lastMessage) chat.lastMessage = '🔒 Sin Llaves';
-             return chat; // <--- IMPRESCINDIBLE RETORNAR EL OBJETO
-          }
-
-          if (chat.lastMessage && chat.lastMessageIV && chat.otherUserPublicKey) {
-            try {
-              chat.lastMessage = await this.cryptoService.decrypt(
-                  chat.lastMessage,
-                  chat.lastMessageIV,
-                  chat.otherUserPublicKey
-              );
-            } catch (error) {
-              chat.lastMessage = 'Mensaje cifrado (Click para leer)';
-            }
-          }
-          return chat; // <--- SIEMPRE RETORNAMOS EL CHAT
-        }));
-
-        this.chats = decryptedChats;
+        this.chats = await this.decryptLastMessages(data);
       },
       error: (err) => console.error(err)
     });
   }
 
   loadChats() {
-    this.chatService.getMyChats().subscribe({
+     this.chatService.getMyChats().subscribe({
       next: async (data) => {
-        const decryptedChats = await Promise.all(data.map(async (chat) => {
-
-            // CORRECCIÓN: Aplicamos la misma lógica que en refresh
-            if (chat.lastMessage && chat.lastMessageIV && chat.otherUserPublicKey) {
-                try {
-                    chat.lastMessage= await this.cryptoService.decrypt(
-                        chat.lastMessage,
-                        chat.lastMessageIV,
-                        chat.otherUserPublicKey // <--- FALTABA ESTO EN TU CÓDIGO ANTERIOR
-                    );
-                } catch (error) {
-                    chat.lastMessage = '🔒 Mensaje ilegible';
-                }
-            } else if (chat.lastMessage && !chat.otherUserPublicKey && !chat.isGroup) {
-                 chat.lastMessage = '🔒 Sin Llaves';
-            }
-
-            return chat;
-        }));
-        this.chats = decryptedChats;
+        this.chats     = await this.decryptLastMessages(data);
         this.isLoading = false;
       },
       error: (err) => {
@@ -202,6 +150,69 @@ export class ChatList implements OnInit,OnDestroy{
         this.isLoading = false;
       }
     });
+  }
+  /**
+   * Descifra el lastMessage de cada chat directo.
+   * Los grupos muestran un placeholder ya que su llave requiere un fetch adicional.
+   */
+  private async decryptLastMessages(chats: ChatListItem[]): Promise<ChatListItem[]> {
+    return Promise.all(chats.map(async (chat) => {
+      if (!chat.lastMessage) return chat;
+
+      if (chat.isGroup) {
+        return this.decryptGroupPreview(chat);
+      }
+
+      if (!chat.otherUserPublicKey) {
+        chat.lastMessage = '🔒 Sin llaves';
+        return chat;
+      }
+
+      if (chat.lastMessageIV) {
+        try {
+          chat.lastMessage = await this.cryptoService.decrypt(
+            chat.lastMessage, chat.lastMessageIV, chat.otherUserPublicKey
+          );
+        } catch {
+          chat.lastMessage = '🔒 Mensaje ilegible';
+        }
+      }
+      return chat;
+    }));
+  }
+  private async decryptGroupPreview(chat: ChatListItem): Promise<ChatListItem> {
+    const cachedKey = this.cryptoService.getGroupKey(chat.id);
+    if (cachedKey && chat.lastMessageIV) {
+      try {
+        chat.lastMessage = await this.cryptoService.decryptWithGroupKey(
+          chat.lastMessage, chat.lastMessageIV, cachedKey
+        );
+      } catch {
+        chat.lastMessage = '💬 Último mensaje';
+      }
+    } else {
+      // Llave no cargada aún — placeholder neutral
+      chat.lastMessage = '💬 Último mensaje';
+    }
+    return chat;
+  }
+  private async decryptPreview(
+    chat: ChatListItem,
+    encryptedContent: string,
+    iv: string
+  ): Promise<string> {
+    try {
+      if (chat.isGroup) {
+        const key = this.cryptoService.getGroupKey(chat.id);
+        return key
+          ? await this.cryptoService.decryptWithGroupKey(encryptedContent, iv, key)
+          : '💬 Nuevo mensaje';
+      }
+      if (chat.otherUserPublicKey) {
+        return await this.cryptoService.decrypt(encryptedContent, iv, chat.otherUserPublicKey);
+      }
+    } catch { /* ignorar */ }
+    return '🔒 Mensaje cifrado';
   }
 
   selectChat(chat: ChatListItem) {
