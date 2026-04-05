@@ -41,6 +41,7 @@ export class LoginPage implements AfterViewInit {
     });
     // Formulario de Registro
     this.registerForm = this.fb.group({
+      displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]], // Validación de email
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -91,62 +92,45 @@ export class LoginPage implements AfterViewInit {
   }
   // --- LÓGICA DE REGISTRO ---
   onRegister() {
-    console.log('1. Botón presionado');
     if (this.registerForm.invalid) {
-      console.log('2. El formulario es INVÁLIDO', this.registerForm.errors); // <--- Pega esto
-      Object.keys(this.registerForm.controls).forEach(key => {
-        const controlErrors = this.registerForm.get(key)?.errors;
-        if (controlErrors) {
-          console.log('Campo fallando:', key, controlErrors);
-        }
-      });
       this.registerForm.markAllAsTouched();
       return;
     }
-    console.log('3. Formulario válido, enviando datos...', this.registerForm.value); // <--- Pega esto
 
-    this.isLoading = true;
-    this.registerError = '';
+    this.isLoading       = true;
+    this.registerError   = '';
     this.registerSuccess = '';
 
     const signupData: SignupRequest = {
-      username: this.registerForm.value.username,
-      email: this.registerForm.value.email,
-      password: this.registerForm.value.password
+      displayName: this.registerForm.value.displayName,
+      username:    this.registerForm.value.username,
+      email:       this.registerForm.value.email,
+      password:    this.registerForm.value.password
     };
 
     this.authService.register(signupData).subscribe({
-      next: (res) => {
-        console.log('4. ÉXITO:', res); // <--- Pega esto
-        this.isLoading = false;
+      next: () => {
+        this.isLoading       = false;
         this.registerSuccess = '¡Cuenta creada! Ahora puedes iniciar sesión.';
-
-        // Opcional: Cerrar modal automáticamente después de 2 segundos
         setTimeout(() => {
           this.closeRegisterModal();
-          // Opcional: Autellenar el login con el usuario nuevo
           this.loginForm.patchValue({ username: signupData.username });
         }, 2000);
       },
       error: (err) => {
-        console.log('4. erroror:', err); // <--- Pega esto
-        this.isLoading = false;
+        this.isLoading     = false;
+        this.registerError = err.error?.error ?? 'Error al registrar usuario.';
         console.error('Register error', err);
-        // El backend devuelve un mensaje de error si el usuario ya existe
-        this.registerError = err.error?.error || 'Error al registrar usuario.';
       }
     });
   }
 
   // Configuración de partículas extraída para limpieza
   private initParticles(): void {
-    if (typeof particlesJS !== 'undefined') {
-      // Verificamos que el ID exista para evitar errores si cambias el HTML
-      const element = document.getElementById('particles-js');
-      if (!element) return;
-
-      particlesJS('particles-js', this.getParticlesConfig());
-    }
+    if (typeof particlesJS === 'undefined') return;
+    const element = document.getElementById('particles-js');
+    if (!element) return;
+    particlesJS('particles-js', this.getParticlesConfig());
   }
 
   // Configuración separada (podrías incluso moverla a un archivo constants.ts)

@@ -19,4 +19,5 @@ export interface SignupRequest {
   username: string;
   email: string;
   password: string;
+  displayName: string;
 }

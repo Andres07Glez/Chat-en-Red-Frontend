@@ -57,9 +57,27 @@
         </div>
 
         <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
-
+            <!-- Nombre completo (displayName) — NUEVO -->
             <div class="input-group">
-                <input type="text" id="reg-username" formControlName="username" required class="input-field">
+                <input type="text" id="reg-displayName" formControlName="displayName"
+                       required class="input-field" autocomplete="name">
+                <label for="reg-displayName">Full Name</label>
+                <div class="glow-line"></div>
+            </div>
+            <div *ngIf="registerForm.get('displayName')?.invalid &&
+                        (registerForm.get('displayName')?.dirty || registerForm.get('displayName')?.touched)">
+                <small class="validation-error"
+                       *ngIf="registerForm.get('displayName')?.hasError('required')">
+                    El nombre es requerido.
+                </small>
+                <small class="validation-error"
+                       *ngIf="registerForm.get('displayName')?.hasError('minlength')">
+                    Mínimo 2 caracteres.
+                </small>
+            </div>
+            <!-- Username -->
+            <div class="input-group">
+                <input type="text" id="reg-username" formControlName="username" required class="input-field" autocomplete="username">
                 <label for="reg-username">Username</label>
                 <div class="glow-line"></div>
             </div>
@@ -71,9 +89,9 @@
                     Mínimo 3 caracteres.
                 </small>
             </div>
-
+            <!-- Email -->
             <div class="input-group">
-                <input type="email" id="reg-email" formControlName="email" required class="input-field">
+                <input type="email" id="reg-email" formControlName="email" required class="input-field" autocomplete="email">
                 <label for="reg-email">Email Address</label>
                 <div class="glow-line"></div>
             </div>
@@ -85,9 +103,9 @@
                     Formato de correo inválido (ej. a@a.com).
                 </small>
             </div>
-
+            <!-- Password -->
             <div class="input-group">
-                <input type="password" id="reg-password" formControlName="password" required class="input-field">
+                <input type="password" id="reg-password" formControlName="password" required class="input-field" autocomplete="new-password">
                 <label for="reg-password">Password</label>
                 <div class="glow-line"></div>
             </div>
