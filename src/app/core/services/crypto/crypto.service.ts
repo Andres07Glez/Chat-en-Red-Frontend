@@ -114,7 +114,7 @@ export class CryptoService {
         return new TextDecoder().decode(decryptedBuffer);
     } catch (error) {
         console.error('Crypto: Fallo', error);
-        return 'Error de llave';
+        return 'Prohibimos Multicuentas';
     }
   }
   // ── Chats grupales (llave AES simétrica compartida) ───────────────────────
