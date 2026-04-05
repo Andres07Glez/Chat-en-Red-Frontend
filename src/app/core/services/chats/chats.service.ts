@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../config/environment';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { ChatListItem } from '../../models/chatsList.model';
 import { MessageResponse } from '../../models/message.model';
 import { ConversationKeyResponse, CreateGroupRequest } from '../../models/group.model';
@@ -18,7 +18,8 @@ export class ChatsService {
 
   // Obtener mis chats (El token va automático por el Interceptor)
   getMyChats(): Observable<ChatListItem[]> {
-    return this.http.get<ChatListItem[]>(this.apiUrl);
+    return this.http.get<ChatListItem[]>(this.apiUrl).pipe(
+      map(data => data ?? []));
   }
   getMessages(conversationId: number): Observable<MessageResponse[]> {
     return this.http.get<MessageResponse[]>(`${environment.baseUrl}/messages/${conversationId}`);

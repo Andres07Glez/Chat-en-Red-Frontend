@@ -49,9 +49,7 @@ export class ContactsViewComponent implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    // Si el clic no fue dentro de un elemento con [data-contact-menu], cerramos
-    if (!target.closest('[data-contact-menu]')) {
+    if (!(event.target as HTMLElement).closest('[data-contact-menu]')) {
       this.openMenuContactId = null;
     }
   }
@@ -63,7 +61,8 @@ export class ContactsViewComponent implements OnInit {
 
   // ── Menú contextual ────────────────────────────────────────────────────────
 
-  toggleMenu(contactId: number): void {
+  toggleMenu(contactId: number, event: MouseEvent): void {
+    event.stopPropagation();
     // Si tocan el mismo, se cierra (null), si no, se abre ese ID
     this.openMenuContactId = this.openMenuContactId === contactId ? null : contactId;
   }
@@ -82,19 +81,15 @@ export class ContactsViewComponent implements OnInit {
       }
     });
   }
-  startConversation(contact: ContactResponse): void {
-    // Cierra el dropdown
-    this.openMenuContactId = null;
+    // ── Acción de fila — iniciar conversación ─────────────────────────────────
 
-    // Evitar doble clic
-    if (this.startingConversationId !== null) return;
+  startConversation(contact: ContactResponse): void {
+     if (this.startingConversationId !== null) return;
     this.startingConversationId = contact.contactUserId;
 
     this.chatsService.startDirectConversation(contact.contactUserId).subscribe({
       next: (chat) => {
-        // 1. Seleccionar el chat → el ChatWindow se muestra automáticamente
         this.chatState.selectChat(chat);
-        // 2. Cerrar el panel de contactos y volver a la vista de chats
         this.closeProfile.emit();
         this.startingConversationId = null;
       },

@@ -1,103 +1,121 @@
 <div class="h-full flex flex-col bg-base-100 w-full relative">
-  <!-- ── Header ──────────────────────────────────────────────────────── -->
 
+  <!-- ── Cabecera ──────────────────────────────────────────────────────── -->
   <div class="flex-none p-4 border-b border-base-200 flex justify-between items-center bg-base-100 z-10">
     <h3 class="font-bold text-lg">Mis Contactos</h3>
     <div class="flex items-center gap-0.5">
-      <button class="btn btn-md btn-circle btn-ghost" title="Agregar contacto" (click)="openAddContactModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-          class="size-4">
+      <button class="btn btn-md btn-circle btn-ghost" title="Agregar contacto"
+              (click)="openAddContactModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+             stroke-width="2" stroke="currentColor" class="size-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       </button>
       <button class="btn btn-md btn-circle btn-ghost" (click)="closeProfile.emit()">✕</button>
     </div>
   </div>
-  <!-- Modal agregar contacto (hijo) -->
+
+  <!-- Modal agregar contacto -->
   <app-add-contact (modalClosed)="loadContacts()"></app-add-contact>
 
-  <!-- ── Lista ────────────────────────────────────────────────────────── -->
-  <div class="flex-1 overflow-y-auto relative">
+  <!-- ── Lista ──────────────────────────────────────────────────────────── -->
+  <div class="flex-1 overflow-y-auto">
 
-    <ul class="list bg-base-100 w-full rounded-none min-h-full pb-40">
+    <!-- Cargando -->
+    <div *ngIf="isLoading" class="flex justify-center p-8">
+      <span class="loading loading-spinner loading-md"></span>
+    </div>
 
-      <li *ngIf="isLoading" class="flex justify-center p-8">
-        <span class="loading loading-spinner loading-md"></span>
-      </li>
+    <!-- Sin contactos -->
+    <div *ngIf="!isLoading && contacts.length === 0"
+         class="flex flex-col items-center justify-center gap-3 p-8 text-base-content/40">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-30" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+      <p class="text-sm font-medium">No tienes contactos aún</p>
+      <p class="text-xs opacity-70 text-center">
+        Pulsa <strong>+</strong> para agregar uno
+      </p>
+    </div>
 
-      <li *ngIf="!isLoading && contacts.length === 0" class="p-4 text-center text-sm opacity-50">
-        No tienes contactos aún.
-      </li>
+    <!-- Lista de contactos -->
+    <ul *ngIf="!isLoading && contacts.length > 0" class="pb-28">
+      <li
+        *ngFor="let contact of contacts"
+        (click)="startConversation(contact)"
+        class="flex items-center gap-3 px-4 py-3 cursor-pointer
+               hover:bg-base-200 transition-colors border-b border-base-200/60
+               active:bg-base-300"
+        [class.opacity-60]="startingConversationId === contact.contactUserId"
+        [class.cursor-wait]="startingConversationId === contact.contactUserId">
 
-      <li *ngFor="let contact of contacts; let last = last" class="list-row hover:bg-base-200 transition-colors">
-
-        <div class="avatar online">
-          <div class="w-9 md:w-9 rounded-full">
-            <div
-              class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold">
-              {{ contact?.contactName?.charAt(0)?.toUpperCase() }}
-            </div>
-          </div>
-        </div>
-
-        <div class="flex-grow">
-          <div class="font-medium">{{ contact.contactName }}</div>
-          <div class="text-xs font-semibold opacity-60">
-            {{ contact.contactEmail }}
-          </div>
-        </div>
-
-        <div class="relative">
-
-          <button class="btn btn-square btn-ghost btn-sm"
-            (click)="toggleMenu(contact.id); $event.stopPropagation()">
-            <!-- Spinner mientras se inicia conversación con este contacto -->
+        <!-- Avatar -->
+        <div class="flex-none">
+          <div class="w-10 h-10 rounded-full bg-neutral text-neutral-content
+                      flex items-center justify-center text-base font-bold shadow-sm">
+            <!-- Spinner mientras inicia esta conversación -->
             <span *ngIf="startingConversationId === contact.contactUserId"
-                  class="loading loading-spinner loading-sm">
+                  class="loading loading-spinner loading-xs text-primary"></span>
+            <span *ngIf="startingConversationId !== contact.contactUserId">
+              {{ contact.contactName.charAt(0).toUpperCase() }}
             </span>
-            <!-- Icono normal -->
-            <svg *ngIf="startingConversationId !== contact.contactUserId"
-              class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-grow min-w-0">
+          <p class="font-semibold text-sm text-base-content truncate leading-tight">
+            {{ contact.contactName }}
+          </p>
+          <p class="text-xs text-base-content/50 uppercase font-medium truncate mt-0.5">
+            {{ contact.contactStatusName }}
+          </p>
+        </div>
+
+        <!-- Botón ⋮ — solo abre el dropdown, NO inicia conversación -->
+        <div class="flex-none relative" data-contact-menu>
+          <button
+            class="btn btn-square btn-ghost btn-sm opacity-50 hover:opacity-100 transition-opacity"
+            (click)="toggleMenu(contact.id, $event)"
+            title="Opciones">
+            <svg class="size-4" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="5" r="1"></circle>
               <circle cx="12" cy="12" r="1"></circle>
               <circle cx="12" cy="19" r="1"></circle>
             </svg>
           </button>
-          <!-- Panel de opciones -->
+
+          <!-- Dropdown -->
           <ul *ngIf="openMenuContactId === contact.id"
-            class="absolute right-0 top-full mt-1 z-[999] w-52
+              class="absolute right-0 top-full mt-1 z-[999] w-44
                      bg-base-100 border border-base-200 rounded-xl
                      shadow-xl py-1 overflow-hidden">
-            <!-- FUNCIONAL: Iniciar conversación -->
+
             <li>
               <button
                 class="w-full flex items-center gap-2 px-4 py-2.5 text-sm
                        hover:bg-base-200 transition-colors text-left"
-                (click)="startConversation(contact)">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                Iniciar conversación
-              </button>
-            </li>
-            <li>
-              <button class="w-full flex items-center gap-2 px-4 py-2.5 text-sm
-                             hover:bg-base-200 transition-colors text-left opacity-50">
+                (click)="$event.stopPropagation()">
                 👤 Ver perfil
               </button>
             </li>
+
             <li>
-              <button class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-error
-                             hover:bg-error/10 transition-colors text-left"
-                             (mousedown)="deleteContact(contact.id); $event.stopPropagation()">
+              <button
+                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-error
+                       hover:bg-error/10 transition-colors text-left"
+                (mousedown)="deleteContact(contact.id); $event.stopPropagation()">
                 🗑️ Eliminar
               </button>
             </li>
+
           </ul>
         </div>
+
       </li>
     </ul>
 

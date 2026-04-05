@@ -10,11 +10,12 @@ import { WebsocketService } from '../../../core/services/webSocket/websocket.ser
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { StartChat } from '../contacts/start-chat/start-chat';
 import { CreateGroup } from '../contacts/create-group/create-group';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  imports: [CommonModule,StartChat,CreateGroup],
+  imports: [CommonModule,FormsModule,StartChat,CreateGroup],
   templateUrl: './chat-list.html',
   styleUrl: './chat-list.css',
 })
@@ -36,15 +37,16 @@ export class ChatList implements OnInit,OnDestroy{
   private refreshSub!: Subscription;
   private userTopicSub: Subscription | null = null;
 
-  chats: ChatListItem[] = [];
-  isLoading = true;
+  public allChats: ChatListItem[] = [];
+
+  filteredChats: ChatListItem[] = [];
+
+  isLoading      = true;
   selectedChatId: number | null = null;
-  /** Controla la visibilidad del mini-menú "+" */
-  showNewChatMenu = false;
+  searchQuery    = '';
 
   ngOnInit() {
     this.loadChats();
-
     this.refreshSub = this.chatState.refreshList$.subscribe(() => {
       this.refreshChatsSilent();
     });
@@ -56,30 +58,24 @@ export class ChatList implements OnInit,OnDestroy{
     if (this.refreshSub)   this.refreshSub.unsubscribe();
     if (this.userTopicSub) this.userTopicSub.unsubscribe();
   }
-  // ─── Menú nueva conversación ─────────────────────────────────────────────────
-
-  toggleNewChatMenu(): void {
-    this.showNewChatMenu = !this.showNewChatMenu;
-  }
-
-  /** Cierra el menú si el usuario hace clic fuera de él */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.new-chat-menu-wrapper')) {
-      this.showNewChatMenu = false;
-    }
-  }
+  // ── Acciones de cabecera ──────────────────────────────────────────────────
 
   openStartIndividualChat(): void {
-    this.showNewChatMenu = false;
-    // Pequeño delay para que el menú cierre antes de que el modal se abra
-    setTimeout(() => this.startChatChild.show(), 50);
+    this.startChatChild.show();
   }
+
   openCreateGroup(): void {
-    this.showNewChatMenu = false;
-    setTimeout(() => this.createGroupChild.show(), 50);
+    this.createGroupChild.show();
   }
+  // ── Búsqueda ──────────────────────────────────────────────────────────────
+
+  onSearch(): void {
+    const q = this.searchQuery.toLowerCase().trim();
+    this.filteredChats = q
+      ? this.allChats.filter(c => c.name.toLowerCase().includes(q))
+      : [...this.allChats];
+  }
+  // ── WebSocket — tiempo real ───────────────────────────────────────────────
 
   private subscribeToMyUpdates() {
     const currentUser = this.authService.getUser();
@@ -90,11 +86,11 @@ export class ChatList implements OnInit,OnDestroy{
     this.userTopicSub = this.wsService.watch(myTopic).subscribe({
       next: async (msg) => {
         const incomingMsg = JSON.parse(msg.body);
-        const chatIndex = this.chats.findIndex(c => c.id === incomingMsg.conversationId);
+        const chatIndex = this.allChats.findIndex(c => c.id === incomingMsg.conversationId);
 
         if (chatIndex !== -1) {
           // === CASO A: EL CHAT YA ESTÁ EN LA LISTA ===
-          const chatToUpdate = this.chats[chatIndex];
+          const chatToUpdate = this.allChats[chatIndex];
           chatToUpdate.lastActivity = incomingMsg.sentAt;
 
           const isMine = incomingMsg.senderName === currentUser.username;
@@ -118,8 +114,8 @@ export class ChatList implements OnInit,OnDestroy{
           }
 
           // Reordenar
-          this.chats.splice(chatIndex, 1);
-          this.chats.unshift(chatToUpdate);
+          this.allChats.splice(chatIndex, 1);
+          this.allChats.unshift(chatToUpdate);
 
         } else {
           // === CASO B: CHAT NUEVO ===
@@ -133,7 +129,8 @@ export class ChatList implements OnInit,OnDestroy{
   refreshChatsSilent() {
     this.chatService.getMyChats().subscribe({
       next: async (data) => {
-        this.chats = await this.decryptLastMessages(data);
+        this.allChats = await this.decryptLastMessages(data);
+        this.onSearch();
       },
       error: (err) => console.error(err)
     });
@@ -142,7 +139,8 @@ export class ChatList implements OnInit,OnDestroy{
   loadChats() {
      this.chatService.getMyChats().subscribe({
       next: async (data) => {
-        this.chats     = await this.decryptLastMessages(data);
+        this.allChats     = await this.decryptLastMessages(data);
+        this.filteredChats = [...this.allChats];
         this.isLoading = false;
       },
       error: (err) => {
@@ -151,10 +149,8 @@ export class ChatList implements OnInit,OnDestroy{
       }
     });
   }
-  /**
-   * Descifra el lastMessage de cada chat directo.
-   * Los grupos muestran un placeholder ya que su llave requiere un fetch adicional.
-   */
+
+  // ── Descifrado de previews ────────────────────────────────────────────────
   private async decryptLastMessages(chats: ChatListItem[]): Promise<ChatListItem[]> {
     return Promise.all(chats.map(async (chat) => {
       if (!chat.lastMessage) return chat;
