@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { RxStomp } from '@stomp/rx-stomp';
 import { AuthService } from '../auth/auth.service';
+import { environment } from '../../../config/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService extends RxStomp {
   private authService = inject(AuthService);
+  private apiPort=environment.basePort;
 
   constructor() {super(); }
   // Método para iniciar la conexión
@@ -15,8 +17,7 @@ export class WebsocketService extends RxStomp {
 
     this.configure({
       // URL del Backend. OJO: Cambia http/https por ws/wss
-      // Si tu backend es http://localhost:8181/ws-chat, aquí pon:
-      brokerURL: 'ws://localhost:8181/ws-chat/websocket',
+      brokerURL: 'ws://'+this.apiPort+'/ws-chat/websocket',
 
       // Headers de conexión (Pasamos el token para seguridad futura)
       connectHeaders: {
