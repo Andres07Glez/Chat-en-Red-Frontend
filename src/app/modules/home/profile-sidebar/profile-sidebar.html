@@ -1,46 +1,159 @@
 <div class="h-full bg-base-100 flex flex-col border-r border-base-300">
 
+  <!-- Header -->
   <div class="p-4 flex items-center justify-between bg-base-200/50">
     <h2 class="text-xl font-bold text-base-content">Perfil</h2>
     <button (click)="onClose()" class="btn btn-ghost btn-sm btn-circle text-base-content">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
     </button>
   </div>
 
   <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-    <div class="flex flex-col items-center gap-4">
 
+    <!-- Skeleton mientras carga  -->
+    <div *ngIf="isLoadingProfile" class="flex flex-col items-center gap-4">
+      <div class="skeleton w-24 h-24 rounded-full"></div>
+      <div class="skeleton h-5 w-32"></div>
+      <div class="skeleton h-4 w-44"></div>
+      <div class="skeleton h-24 w-full mt-2 rounded-box"></div>
+      <div class="skeleton h-8 w-full rounded-btn"></div>
+    </div>
+
+    <!-- Vista principal -->
+    <div *ngIf="!isLoadingProfile" class="flex flex-col items-center gap-4">
+
+      <!-- Avatar (foto pendiente) -->
       <div class="avatar online">
         <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-            <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-3xl font-bold">
-                {{ currentUser?.username?.charAt(0)?.toUpperCase() }}
-            </div>
+          <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-3xl font-bold">
+            {{ displayName.charAt(0).toUpperCase() }}
+          </div>
         </div>
       </div>
 
+      <!-- Nombre y email -->
       <div class="text-center">
-        <p class="font-bold text-xl text-base-content">{{ currentUser?.username }}</p>
-        <p class="text-sm text-base-content/60">{{ currentUser?.email }}</p>
+        <p class="font-bold text-xl text-base-content">{{ displayName }}</p>
+        <p class="text-sm text-base-content/60">{{ profileData?.email }}</p>
         <span class="badge badge-success badge-sm mt-2">En línea</span>
       </div>
 
-      <div class="w-full mt-6 space-y-4 bg-base-200 p-4 rounded-box">
-        <div class="text-sm">
-          <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Estado</p>
-          <p class="font-medium">Programando en Angular 🚀</p>
-        </div>
-        <div class="text-sm">
-          <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Miembro desde</p>
-          <p class="font-medium">Noviembre 2025</p>
-        </div>
-      </div>
+      <!--  MODO VISTA -->
+      
+      <ng-container *ngIf="!isEditing">
 
-      <div class="flex flex-col w-full gap-2 mt-8">
-        <button class="btn btn-outline btn-primary btn-sm">Editar perfil</button>
-        <button (click)="logout()" class="btn btn-error btn-outline btn-sm mt-4">
+        <div class="w-full space-y-0 bg-base-200 rounded-box overflow-hidden">
+
+          <!-- Estado / Bio -->
+          <div class="px-4 pt-4 pb-3">
+            <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Estado</p>
+            <p class="text-sm font-medium" [class.opacity-40]="!profileData?.bio">
+              {{ profileData?.bio || 'Sin estado' }}
+            </p>
+          </div>
+
+          <div class="divider m-0 px-4"></div>
+
+          <!-- Miembro desde -->
+          <div class="px-4 pt-3 pb-4">
+            <p class="text-base-content/60 text-xs uppercase font-bold mb-1">Miembro desde</p>
+            <p class="text-sm font-medium">
+              {{ formatMemberSince(profileData?.createdAt) }}
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Botones de acción en modo vista -->
+        <div class="flex flex-col w-full gap-2 mt-2">
+          <button class="btn btn-outline btn-primary btn-sm" (click)="startEditing()">
+            Editar perfil
+          </button>
+          <button (click)="logout()" class="btn btn-error btn-outline btn-sm mt-2">
             Cerrar sesión
-        </button>
-      </div>
+          </button>
+        </div>
+
+      </ng-container>
+
+      
+      <!--  MODO EDICIÓN -->
+      
+      <ng-container *ngIf="isEditing">
+
+        <div class="w-full space-y-3">
+
+          <!-- Nombre a mostrar -->
+          <div class="form-control w-full">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold uppercase opacity-60">Nombre a mostrar</span>
+            </label>
+            <input
+              type="text"
+              class="input input-bordered input-sm w-full"
+              placeholder="Tu nombre"
+              maxlength="100"
+              [disabled]="isSaving"
+              [(ngModel)]="editForm.displayName" />
+          </div>
+
+          <!-- Bio / Estado -->
+          <div class="form-control w-full">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold uppercase opacity-60">Estado</span>
+            </label>
+            <textarea
+              class="textarea textarea-bordered textarea-sm w-full resize-none"
+              placeholder="Cuéntanos algo de ti…"
+              rows="3"
+              maxlength="200"
+              [disabled]="isSaving"
+              [(ngModel)]="editForm.bio">
+            </textarea>
+            <label class="label pt-1">
+              <span class="label-text-alt opacity-40">{{ editForm.bio.length }}/200</span>
+            </label>
+          </div>
+
+          <!-- Foto de perfil (pendiente) -->
+          <div class="flex items-center gap-2 p-3 bg-base-200 rounded-box opacity-50 cursor-not-allowed select-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="text-xs">Cambiar foto de perfil (próximamente)</span>
+          </div>
+
+          <!-- Alerta de error -->
+          <div *ngIf="saveError" role="alert" class="alert alert-error py-2 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>{{ saveError }}</span>
+          </div>
+
+          <!-- Botones guardar / cancelar -->
+          <div class="flex gap-2 pt-1">
+            <button
+              class="btn btn-primary btn-sm flex-1"
+              [disabled]="isSaving"
+              (click)="saveProfile()">
+              <span *ngIf="isSaving" class="loading loading-spinner loading-xs"></span>
+              {{ isSaving ? 'Guardando…' : 'Guardar' }}
+            </button>
+            <button
+              class="btn btn-ghost btn-sm flex-1"
+              [disabled]="isSaving"
+              (click)="cancelEdit()">
+              Cancelar
+            </button>
+          </div>
+
+        </div>
+
+      </ng-container>
 
     </div>
   </div>
