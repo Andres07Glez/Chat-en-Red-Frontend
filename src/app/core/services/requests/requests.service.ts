@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http'; // Para peticiones HTTP
 import { Observable } from 'rxjs';
 import { ContactRequest } from '../../models/requests.model';
+import { environment } from '../../../config/environment';
  // Ajusta la ruta a tu modelo
 
 @Injectable({
@@ -9,7 +10,7 @@ import { ContactRequest } from '../../models/requests.model';
 })
 export class RequestsService {
   // La URL de tu backend (ajusta el puerto si es distinto)
-  private apiUrl = 'http://localhost:8181/contacts/requests';
+  private apiUrl = environment.baseUrl+'/contacts/requests';
 
   constructor(private http: HttpClient) { }
 

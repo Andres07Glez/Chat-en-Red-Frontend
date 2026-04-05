@@ -3,13 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ContactResponse } from '../../models/Contact.interface';
 import { ContactLookupResponse } from '../../models/ContactLookupResponse.interface';
+import { environment } from '../../../config/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContactService {
   // Asegúrate de que este puerto (8080) sea el de tu Spring Boot
-  private apiUrl = 'http://localhost:8181/contacts';
+  private apiUrl = environment.baseUrl+'/contacts';
 
   constructor(private http: HttpClient) {}
 
