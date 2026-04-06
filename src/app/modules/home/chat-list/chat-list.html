@@ -1,38 +1,30 @@
 <div class="flex flex-col h-full bg-base-100 border-r border-base-300">
 
-  <!-- ── Cabecera ──────────────────────────────────────────────────────── -->
-  <div class="navbar bg-base-200 min-h-[60px] px-4 justify-between sticky top-0 z-10 shadow-sm">
+  <!-- ── Cabecera normal ───────────────────────────────────────────────── -->
+  <div *ngIf="!isSelectionMode"
+       class="navbar bg-base-200 min-h-[60px] px-4 justify-between sticky top-0 z-10 shadow-sm">
 
-    <!-- Izquierda: toggle de tema -->
     <div class="flex gap-1">
       <button class="btn btn-ghost btn-circle btn-sm text-base-content"
               (click)="themeService.toggleTheme()"
               [title]="themeService.currentTheme() === 'dark' ? 'Modo claro' : 'Modo oscuro'">
-        <!-- Sol (modo dark activo → cambiar a light) -->
-        <svg *ngIf="themeService.currentTheme() === 'dark'"
-             xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
+        <svg *ngIf="themeService.currentTheme() === 'dark'" xmlns="http://www.w3.org/2000/svg"
+             class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
-        <!-- Luna (modo light activo → cambiar a dark) -->
-        <svg *ngIf="themeService.currentTheme() === 'light'"
-             xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
+        <svg *ngIf="themeService.currentTheme() === 'light'" xmlns="http://www.w3.org/2000/svg"
+             class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
         </svg>
       </button>
     </div>
 
-    <!-- Derecha: nueva conversación individual + nuevo grupo -->
     <div class="flex gap-1 items-center">
-
-      <!-- Chat individual -->
-      <button
-        (click)="openStartIndividualChat()"
-        title="Nueva conversación"
-        class="btn btn-ghost btn-circle btn-sm text-base-content">
+      <!-- Nueva conversación -->
+      <button (click)="openStartIndividualChat()" title="Nueva conversación"
+              class="btn btn-ghost btn-circle btn-sm text-base-content">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -41,10 +33,8 @@
       </button>
 
       <!-- Nuevo grupo -->
-      <button
-        (click)="openCreateGroup()"
-        title="Nuevo grupo"
-        class="btn btn-ghost btn-circle btn-sm text-base-content">
+      <button (click)="openCreateGroup()" title="Nuevo grupo"
+              class="btn btn-ghost btn-circle btn-sm text-base-content">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -52,7 +42,63 @@
         </svg>
       </button>
 
+      <!-- Entrar en modo selección -->
+      <button (click)="enterSelectionMode()" title="Seleccionar chats"
+              class="btn btn-ghost btn-circle btn-sm text-base-content">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+      </button>
     </div>
+  </div>
+
+  <!-- ── Cabecera de selección ─────────────────────────────────────────── -->
+  <div *ngIf="isSelectionMode"
+       class="navbar bg-error/10 border-b border-error/20 min-h-[60px] px-4 justify-between sticky top-0 z-10">
+
+    <div class="flex items-center gap-3">
+      <!-- Botón cancelar -->
+      <button (click)="exitSelectionMode()"
+              class="btn btn-ghost btn-circle btn-sm text-base-content">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Seleccionar todos -->
+      <button (click)="toggleSelectAll()"
+              class="flex items-center gap-2 btn btn-ghost btn-sm text-sm font-normal">
+        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+             [class.bg-error]="allFilteredSelected"
+             [class.border-error]="allFilteredSelected"
+             [class.border-base-content]="!allFilteredSelected">
+          <svg *ngIf="allFilteredSelected" xmlns="http://www.w3.org/2000/svg"
+               class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <span class="text-base-content">
+          {{ selectedCount > 0 ? selectedCount + ' seleccionados' : 'Seleccionar todos' }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Botón eliminar -->
+    <button
+      (click)="deleteSelected()"
+      [disabled]="selectedCount === 0 || isDeleting"
+      class="btn btn-error btn-sm gap-2 text-white disabled:opacity-40">
+      <span *ngIf="isDeleting" class="loading loading-spinner loading-xs"></span>
+      <svg *ngIf="!isDeleting" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      {{ isDeleting ? 'Eliminando...' : 'Eliminar' }}
+    </button>
   </div>
 
   <!-- ── Buscador ───────────────────────────────────────────────────────── -->
@@ -65,16 +111,10 @@
               d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
               clip-rule="evenodd" />
       </svg>
-      <input
-        type="text"
-        class="grow bg-transparent border-none outline-none text-sm"
-        placeholder="Buscar chat..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-      />
-      <!-- Botón limpiar búsqueda -->
-      <button *ngIf="searchQuery"
-              (click)="searchQuery = ''; onSearch()"
+      <input type="text" class="grow bg-transparent border-none outline-none text-sm"
+             placeholder="Buscar chat..."
+             [(ngModel)]="searchQuery" (input)="onSearch()" />
+      <button *ngIf="searchQuery" (click)="searchQuery = ''; onSearch()"
               class="text-base-content/40 hover:text-base-content transition-colors flex-none">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
@@ -84,15 +124,13 @@
     </label>
   </div>
 
-  <!-- ── Lista de chats ─────────────────────────────────────────────────── -->
+  <!-- ── Lista ─────────────────────────────────────────────────────────── -->
   <div class="flex-1 overflow-y-auto custom-scrollbar">
 
-    <!-- Cargando -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-20 text-primary">
       <span class="loading loading-spinner loading-md"></span>
     </div>
 
-    <!-- Sin chats (lista vacía, no hay búsqueda activa) -->
     <div *ngIf="!isLoading && allChats.length === 0"
          class="flex flex-col items-center justify-center gap-3 p-8 text-base-content/40">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-30" fill="none"
@@ -101,19 +139,11 @@
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
       <p class="text-sm font-medium">No tienes chats aún</p>
-      <p class="text-xs opacity-70 text-center">
-        Usa los iconos de arriba para iniciar<br>una conversación o crear un grupo
-      </p>
+      <p class="text-xs opacity-70 text-center">Usa los iconos de arriba para iniciar una conversación</p>
     </div>
 
-    <!-- Sin resultados de búsqueda -->
     <div *ngIf="!isLoading && allChats.length > 0 && filteredChats.length === 0"
          class="flex flex-col items-center justify-center gap-2 p-8 text-base-content/40">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-30" fill="none"
-           viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
       <p class="text-sm font-medium">Sin resultados</p>
       <p class="text-xs opacity-70">No hay chats con "<strong>{{ searchQuery }}</strong>"</p>
     </div>
@@ -122,10 +152,25 @@
     <div *ngFor="let chat of filteredChats; trackBy: trackByChatId"
          (click)="selectChat(chat)"
          class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-200
-                transition-colors border-b border-base-200/50"
-         [class.bg-base-200]="selectedChatId === chat.id"
-         [class.border-l-4]="selectedChatId === chat.id"
-         [class.border-l-primary]="selectedChatId === chat.id">
+                transition-all border-b border-base-200/50 relative"
+         [class.bg-base-200]="!isSelectionMode && selectedChatId === chat.id"
+         [class.border-l-4]="!isSelectionMode && selectedChatId === chat.id"
+         [class.border-l-primary]="!isSelectionMode && selectedChatId === chat.id"
+         [class.bg-error]="isSelectionMode && selectedChatIds.has(chat.id)"
+         [class.bg-opacity-10]="isSelectionMode && selectedChatIds.has(chat.id)">
+
+      <!-- Checkbox (modo selección) -->
+      <div *ngIf="isSelectionMode" class="flex-none">
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+             [class.bg-error]="selectedChatIds.has(chat.id)"
+             [class.border-error]="selectedChatIds.has(chat.id)"
+             [class.border-base-content]="!selectedChatIds.has(chat.id)">
+          <svg *ngIf="selectedChatIds.has(chat.id)" xmlns="http://www.w3.org/2000/svg"
+               class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
 
       <!-- Avatar -->
       <div class="avatar placeholder flex-none">
@@ -150,12 +195,9 @@
             {{ formatTime(chat.lastActivity) }}
           </span>
         </div>
-
         <div class="flex justify-between items-center">
-          <p class="text-xs text-base-content/60 truncate pr-2">
-            {{ chat.lastMessage || '...' }}
-          </p>
-          <span *ngIf="chat.unreadCount && chat.unreadCount > 0"
+          <p class="text-xs text-base-content/60 truncate pr-2">{{ chat.lastMessage || '...' }}</p>
+          <span *ngIf="!isSelectionMode && chat.unreadCount && chat.unreadCount > 0"
                 class="badge badge-primary badge-xs font-bold text-white flex-none">
             {{ chat.unreadCount }}
           </span>
@@ -163,10 +205,8 @@
       </div>
 
     </div>
-
   </div>
 
-  <!-- Modales (ocultos en DOM, se abren por @ViewChild) -->
   <app-start-chat></app-start-chat>
   <app-create-group></app-create-group>
 

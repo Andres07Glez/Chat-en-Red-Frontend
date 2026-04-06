@@ -43,5 +43,18 @@ export class ChatsService {
   getMyConversationKey(conversationId: number): Observable<ConversationKeyResponse> {
     return this.http.get<ConversationKeyResponse>(`${this.apiUrl}/${conversationId}/my-key`);
   }
+  deleteConversation(conversationId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${conversationId}`);
+  }
+
+  /**
+   * DELETE /messages/batch
+   * Soft-delete de los mensajes indicados (solo los propios del usuario).
+   */
+  deleteMessages(messageIds: number[]): Observable<void> {
+    return this.http.delete<void>(`${environment.baseUrl}/messages/batch`, {
+      body: { messageIds }
+    });
+  }
 
 }

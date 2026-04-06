@@ -38,12 +38,28 @@ export class ChatList implements OnInit,OnDestroy{
   private userTopicSub: Subscription | null = null;
 
   public allChats: ChatListItem[] = [];
-
   filteredChats: ChatListItem[] = [];
 
   isLoading      = true;
   selectedChatId: number | null = null;
   searchQuery    = '';
+  // ── Modo selección ────────────────────────────────────────────────────────
+
+  /** true = modo selección activo (checkboxes visibles) */
+  isSelectionMode = false;
+
+  /** IDs de chats marcados para eliminar */
+  selectedChatIds = new Set<number>();
+
+  isDeleting = false;
+
+  get selectedCount(): number { return this.selectedChatIds.size; }
+
+  get allFilteredSelected(): boolean {
+    return this.filteredChats.length > 0 &&
+           this.filteredChats.every(c => this.selectedChatIds.has(c.id));
+  }
+  // ── Ciclo de vida ────────────────────────────────────────────────────────
 
   ngOnInit() {
     this.loadChats();
@@ -67,6 +83,85 @@ export class ChatList implements OnInit,OnDestroy{
   openCreateGroup(): void {
     this.createGroupChild.show();
   }
+  enterSelectionMode(): void {
+    this.isSelectionMode = true;
+    this.selectedChatIds = new Set();
+  }
+
+  exitSelectionMode(): void {
+    this.isSelectionMode = false;
+    this.selectedChatIds = new Set();
+  }
+
+// ── Selección ─────────────────────────────────────────────────────────────
+
+  toggleChatSelection(chatId: number, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedChatIds.has(chatId)) {
+      this.selectedChatIds.delete(chatId);
+    } else {
+      this.selectedChatIds.add(chatId);
+    }
+    this.selectedChatIds = new Set(this.selectedChatIds);
+  }
+
+  toggleSelectAll(): void {
+    if (this.allFilteredSelected) {
+      this.filteredChats.forEach(c => this.selectedChatIds.delete(c.id));
+    } else {
+      this.filteredChats.forEach(c => this.selectedChatIds.add(c.id));
+    }
+    this.selectedChatIds = new Set(this.selectedChatIds);
+  }
+
+  // ── Eliminación ───────────────────────────────────────────────────────────
+
+  deleteSelected(): void {
+    if (this.selectedChatIds.size === 0 || this.isDeleting) return;
+
+    const count = this.selectedChatIds.size;
+    const label = count === 1 ? 'esta conversación' : `estas ${count} conversaciones`;
+    if (!confirm(`¿Eliminar ${label}? Esta acción no se puede deshacer.`)) return;
+
+    this.isDeleting = true;
+    const ids = [...this.selectedChatIds];
+
+    // Eliminar en paralelo y esperar a que todas terminen
+    let pending = ids.length;
+    let hasErrors = false;
+
+    ids.forEach(id => {
+      this.chatService.deleteConversation(id).subscribe({
+        next: () => {
+          pending--;
+          if (pending === 0) this.onDeleteComplete(hasErrors);
+        },
+        error: () => {
+          hasErrors = true;
+          pending--;
+          if (pending === 0) this.onDeleteComplete(hasErrors);
+        }
+      });
+    });
+  }
+
+  private onDeleteComplete(hadErrors: boolean): void {
+    this.isDeleting = false;
+
+    // Si el chat activo fue eliminado, limpiar la selección en el ChatWindow
+    if (this.selectedChatIds.has(this.selectedChatId!)) {
+      this.chatState.clear();
+      this.selectedChatId = null;
+    }
+
+    this.exitSelectionMode();
+    this.refreshChatsSilent();
+
+    if (hadErrors) {
+      alert('Algunos chats no pudieron eliminarse. Intenta de nuevo.');
+    }
+  }
+
   // ── Búsqueda ──────────────────────────────────────────────────────────────
 
   onSearch(): void {
@@ -121,10 +216,12 @@ export class ChatList implements OnInit,OnDestroy{
           // === CASO B: CHAT NUEVO ===
           this.refreshChatsSilent();
         }
+        this.onSearch();
       },
       error: (err) => console.error('Error en updates de lista', err)
     });
   }
+  // ── Carga de datos ────────────────────────────────────────────────────────
 
   refreshChatsSilent() {
     this.chatService.getMyChats().subscribe({
@@ -154,7 +251,6 @@ export class ChatList implements OnInit,OnDestroy{
   private async decryptLastMessages(chats: ChatListItem[]): Promise<ChatListItem[]> {
     return Promise.all(chats.map(async (chat) => {
       if (!chat.lastMessage) return chat;
-
       if (chat.isGroup) {
         return this.decryptGroupPreview(chat);
       }
@@ -177,11 +273,11 @@ export class ChatList implements OnInit,OnDestroy{
     }));
   }
   private async decryptGroupPreview(chat: ChatListItem): Promise<ChatListItem> {
-    const cachedKey = this.cryptoService.getGroupKey(chat.id);
-    if (cachedKey && chat.lastMessageIV) {
+    const key = this.cryptoService.getGroupKey(chat.id);
+    if (key && chat.lastMessageIV) {
       try {
         chat.lastMessage = await this.cryptoService.decryptWithGroupKey(
-          chat.lastMessage, chat.lastMessageIV, cachedKey
+          chat.lastMessage, chat.lastMessageIV, key
         );
       } catch {
         chat.lastMessage = '💬 Último mensaje';
@@ -210,8 +306,12 @@ export class ChatList implements OnInit,OnDestroy{
     } catch { /* ignorar */ }
     return '🔒 Mensaje cifrado';
   }
-
+  // ── Selección de chat activo ──────────────────────────────────────────────
   selectChat(chat: ChatListItem) {
+    if (this.isSelectionMode) {
+      this.toggleChatSelection(chat.id, new Event('click'));
+      return;
+    }
     chat.unreadCount = 0;
     this.chatState.selectChat(chat);
     this.selectedChatId = chat.id;
@@ -222,7 +322,7 @@ export class ChatList implements OnInit,OnDestroy{
     return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  trackByChatId(_index: number, chat: ChatListItem): number {
+  trackByChatId(_: number, chat: ChatListItem): number {
     return chat.id;
   }
 
