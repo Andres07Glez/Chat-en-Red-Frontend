@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, inject, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ChatListItem } from '../../../core/models/chatsList.model';
 import { MessageResponse } from '../../../core/models/message.model';
 import { ChatsService } from '../../../core/services/chats/chats.service';
@@ -20,6 +20,11 @@ import { UserService } from '../../../core/services/user/user.service';
 })
 export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   @Input() chatData!: ChatListItem; // Recibimos el chat seleccionado del padre
+  /** Si true, muestra el botón ← en la cabecera (solo en móvil) */
+  @Input() showBackButton = false;
+  /** Emite cuando el usuario toca el botón ← */
+  @Output() backClicked = new EventEmitter<void>();
+
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   private chatService = inject(ChatsService);
@@ -52,20 +57,19 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
     ).length;
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  // ── Ciclo de vida ────────────────────────────────────────────────────────
+
+  ngOnChanges(changes: SimpleChanges): void {
     if (!changes['chatData'] || !this.chatData) return;
 
     const prevChat = changes['chatData'].previousValue;
     if (prevChat) this.chatState.setDraft(prevChat.id, this.newMessageText);
 
-    // Resetear estado para el nuevo chat
-    this.groupKey   = null;
-    this.messages   = [];
+    this.groupKey       = null;
+    this.messages       = [];
     this.newMessageText = this.chatState.getDraft(this.chatData.id);
 
-    // Salir del modo selección al cambiar de chat
     this.exitSelectionMode();
-
     this.subscribeToRealTimeMessages();
 
     if (this.chatData.isGroup) {
@@ -75,15 +79,14 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
       this.loadMessages();
     }
   }
-  // Scroll automático al último mensaje
-  ngAfterViewChecked() {
-    this.scrollToBottom();
-  }
 
-  ngOnDestroy() {
-    this.unsubscribeChat(); // Limpieza al destruir componente
+  ngAfterViewChecked(): void { this.scrollToBottom(); }
+
+  ngOnDestroy(): void {
+    this.unsubscribeChat();
     if (this.chatData) this.chatState.setDraft(this.chatData.id, this.newMessageText);
   }
+
   // ── Modo selección ────────────────────────────────────────────────────────
 
   enterSelectionMode(): void {
@@ -106,10 +109,6 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
     this.selectedMessageIds = new Set(this.selectedMessageIds);
   }
 
-  /**
-   * Elimina solo los mensajes propios seleccionados.
-   * Los ajenos simplemente se ignoran (no se envían al backend).
-   */
   deleteSelectedMessages(): void {
     if (this.isDeletingMessages) return;
 
@@ -126,10 +125,8 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
     if (!confirm(`¿Eliminar ${label}? Esta acción no se puede deshacer.`)) return;
 
     this.isDeletingMessages = true;
-
     this.chatService.deleteMessages(ownIds).subscribe({
       next: () => {
-        // Quitar del array local (UI optimista)
         this.messages = this.messages.filter(m => !ownIds.includes(m.id));
         this.exitSelectionMode();
         this.isDeletingMessages = false;
@@ -138,16 +135,16 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
       error: (err) => {
         console.error('Error eliminando mensajes:', err);
         this.isDeletingMessages = false;
-        alert('No se pudieron eliminar los mensajes. Inténtalo de nuevo.');
+        alert('No se pudieron eliminar. Intenta de nuevo.');
       }
     });
   }
+
   // ── Carga de mensajes ────────────────────────────────────────────────────
 
   private async loadGroupKeyThenMessages(): Promise<void> {
     this.isLoadingGroupKey = true;
     this.isLoading         = true;
-
     try {
       const cached = this.cryptoService.getGroupKey(this.chatData.id);
       if (cached) {
@@ -157,13 +154,10 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
           this.chatService.getMyConversationKey(this.chatData.id)
         );
         this.groupKey = await this.cryptoService.decryptGroupKey(
-          keyData.encryptedKey,
-          keyData.iv,
-          keyData.creatorPublicKey
+          keyData.encryptedKey, keyData.iv, keyData.creatorPublicKey
         );
         this.cryptoService.storeGroupKey(this.chatData.id, this.groupKey);
       }
-
       this.loadMessages();
     } catch (err) {
       console.error('Error cargando llave de grupo:', err);
@@ -172,9 +166,10 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
       this.isLoadingGroupKey = false;
     }
   }
+
   loadMessages(): void {
     this.isLoading = true;
-    if (this.chatData.isGroup && !this.groupKey)             { this.isLoading = false; return; }
+    if (this.chatData.isGroup && !this.groupKey)                   { this.isLoading = false; return; }
     if (!this.chatData.isGroup && !this.chatData.otherUserPublicKey) { this.isLoading = false; return; }
 
     this.chatService.getMessages(this.chatData.id).subscribe({
@@ -186,70 +181,61 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
       error: (err) => { console.error(err); this.isLoading = false; }
     });
   }
+
   private async decryptMessages(messages: MessageResponse[]): Promise<MessageResponse[]> {
     return Promise.all(messages.map(async (msg) => {
       if (msg.messageTypeCode !== 'TEXT' || !msg.iv) return msg;
       try {
         if (this.chatData.isGroup && this.groupKey) {
-          msg.content = await this.cryptoService.decryptWithGroupKey(
-            msg.content, msg.iv, this.groupKey
-          );
+          msg.content = await this.cryptoService.decryptWithGroupKey(msg.content, msg.iv, this.groupKey);
         } else if (!this.chatData.isGroup && this.chatData.otherUserPublicKey) {
-          msg.content = await this.cryptoService.decrypt(
-            msg.content, msg.iv, this.chatData.otherUserPublicKey
-          );
+          msg.content = await this.cryptoService.decrypt(msg.content, msg.iv, this.chatData.otherUserPublicKey);
         }
-      } catch {
-        msg.content = '🔒 Mensaje ilegible';
-      }
+      } catch { msg.content = '🔒 Mensaje ilegible'; }
       return msg;
     }));
   }
+
   // ── WebSocket ─────────────────────────────────────────────────────────────
 
-  private subscribeToRealTimeMessages() {
-      this.unsubscribeChat();
-      const currentUser = this.authService.getUser();
+  private subscribeToRealTimeMessages(): void {
+    this.unsubscribeChat();
+    const currentUser = this.authService.getUser();
 
-      const topic = `/topic/chat/${this.chatData.id}`;
+    this.chatSubscription = this.wsService.watch(`/topic/chat/${this.chatData.id}`).subscribe({
+      next: async (message) => {
+        const msgReceived = JSON.parse(message.body);
+        if (this.messages.some(m => m.id === msgReceived.id)) return;
 
-      this.chatSubscription = this.wsService.watch(topic).subscribe({
-        next: async (message) => {
-          const msgReceived = JSON.parse(message.body);
-          if (this.messages.some(m => m.id === msgReceived.id)) return;
+        if (currentUser && msgReceived.senderName === currentUser.username) {
+          msgReceived.isMine = true;
+        }
 
-          if (currentUser && msgReceived.senderName === currentUser.username) {
-              msgReceived.isMine = true;
-          }
-
-          if (msgReceived.messageTypeCode === 'TEXT' && msgReceived.iv) {
-            try {
-              if (this.chatData.isGroup && this.groupKey) {
-                msgReceived.content = await this.cryptoService.decryptWithGroupKey(
-                  msgReceived.content, msgReceived.iv, this.groupKey
-                );
-              } else if (!this.chatData.isGroup && this.chatData.otherUserPublicKey) {
-                msgReceived.content = await this.cryptoService.decrypt(
-                  msgReceived.content, msgReceived.iv, this.chatData.otherUserPublicKey
-                );
-              }
-            } catch {
-              msgReceived.content = '🔒 Mensaje cifrado';
+        if (msgReceived.messageTypeCode === 'TEXT' && msgReceived.iv) {
+          try {
+            if (this.chatData.isGroup && this.groupKey) {
+              msgReceived.content = await this.cryptoService.decryptWithGroupKey(
+                msgReceived.content, msgReceived.iv, this.groupKey);
+            } else if (!this.chatData.isGroup && this.chatData.otherUserPublicKey) {
+              msgReceived.content = await this.cryptoService.decrypt(
+                msgReceived.content, msgReceived.iv, this.chatData.otherUserPublicKey);
             }
-          }
+          } catch { msgReceived.content = '🔒 Mensaje cifrado'; }
+        }
 
-          this.messages.push(msgReceived);
-
-          if (this.chatData.id === msgReceived.conversationId) {
-            this.chatService.markAsRead(this.chatData.id).subscribe();
-          }
-          setTimeout(() => this.scrollToBottom(), 50);
-          this.chatState.triggerRefresh();
-        },
-        error: (err) => console.error('Error WS chat:', err)
-      });
+        this.messages.push(msgReceived);
+        if (this.chatData.id === msgReceived.conversationId) {
+          this.chatService.markAsRead(this.chatData.id).subscribe();
+        }
+        setTimeout(() => this.scrollToBottom(), 50);
+        this.chatState.triggerRefresh();
+      },
+      error: (err) => console.error('Error WS chat:', err)
+    });
   }
+
   // ── Envío ─────────────────────────────────────────────────────────────────
+
   async sendMessage(): Promise<void> {
     if (!this.newMessageText.trim() || !this.chatData || this.isSending) return;
     if (this.chatData.isGroup && !this.groupKey) { alert('Llave de grupo no lista.'); return; }
@@ -292,7 +278,8 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  private refreshPublicKey() {
+
+  private refreshPublicKey(): void {
     if (this.chatData.isGroup || !this.chatData.otherUserId) return;
     this.userService.getPublicKey(this.chatData.otherUserId).subscribe({
       next: (res) => {
@@ -301,20 +288,19 @@ export class ChatWindow implements OnChanges, AfterViewChecked,OnDestroy{
           this.loadMessages();
         }
       },
-      error: (err) => console.error('Error actualizando llave pública:', err)
+      error: (err) => console.error('Error actualizando llave:', err)
     });
   }
 
-  // ── Helpers de UI ────────────────────────────────────────────────────────
   private unsubscribeChat(): void {
     if (this.chatSubscription) { this.chatSubscription.unsubscribe(); this.chatSubscription = null; }
   }
 
-  scrollToBottom(): void {
+  private scrollToBottom(): void {
     try {
       this.scrollContainer.nativeElement.scrollTop =
         this.scrollContainer.nativeElement.scrollHeight;
-    } catch { /* Ignorar si el elemento no existe todavía */ }
+    } catch { /* no renderizado */ }
   }
 
   // Helper para hora

@@ -1,65 +1,58 @@
-<!-- Este componente solo contiene la barra lateral de iconos -->
-<aside class="flex h-full w-16 bg-base-100 border-r border-base-300 flex-col items-center py-4">
-  <!-- MENÚ -->
-  <ul class="menu menu-vertical flex items-center gap-3">
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Chats"
-        aria-label="Chats"
-        (click)="onChatsClick.emit()"
-      >
-        <img src="icons/chats.png" class="w-6 md:w-8" alt="Chats">
-      </button>
-    </li>
+<!--
+  Este componente se adapta solo con CSS:
+  • En móvil (< md): se muestra como bottom nav horizontal
+  • En desktop (md+): se muestra como sidebar vertical
+  El truco está en que el <host> cambia de flex-direction según el breakpoint.
+-->
 
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Solicitudes"
-        aria-label="Solicitudes"
-        (click)="onRequestsClick.emit()"
-      >
-        <img src="icons/grupos.png" class="w-6 md:w-8" alt="Solicitudes">
-      </button>
-    </li>
+<!-- ── Iconos de navegación ───────────────────────────────────────────── -->
 
-    <li>
-      <button
-        class="flex items-center justify-center btn btn-ghost btn-circle tooltip tooltip-right"
-        data-tip="Contactos"
-        aria-label="Contactos"
-        (click)="onContactsClick.emit()"
-      >
-        <img src="icons/contactos.png" class="w-6 md:w-8" alt="Contactos">
-      </button>
-    </li>
-  </ul>
+<!-- Chat -->
+<button
+  class="menu-btn"
+  (click)="onChatsClick.emit()"
+  aria-label="Chats">
+  <img src="icons/chats.png" class="menu-icon" alt="Chats">
+  <span class="menu-label">Chats</span>
+</button>
 
-  <!-- ESPACIADOR -->
-  <div class="flex-1"></div>
+<!-- Solicitudes -->
+<button
+  class="menu-btn"
+  (click)="onRequestsClick.emit()"
+  aria-label="Solicitudes">
+  <img src="icons/grupos.png" class="menu-icon" alt="Solicitudes">
+  <span class="menu-label">Solicitudes</span>
+</button>
 
-  <!-- CONFIGURACIÓN -->
-  <button
-    class="flex items-center justify-center mb-6 btn btn-ghost btn-circle tooltip tooltip-right"
-    data-tip="Ajustes"
-    aria-label="Ajustes"
-  >
-    <img src="icons/ajustes.png" class="w-6 md:w-8" alt="Ajustes">
-  </button>
+<!-- Contactos -->
+<button
+  class="menu-btn"
+  (click)="onContactsClick.emit()"
+  aria-label="Contactos">
+  <img src="icons/contactos.png" class="menu-icon" alt="Contactos">
+  <span class="menu-label">Contactos</span>
+</button>
 
-  <!-- PERFIL -->
-  <button
-    (click)="togglePerfil()"
-    class="perfil-button flex flex-col items-center mb-6 focus:outline-none btn btn-ghost btn-circle"
-    aria-label="Abrir perfil"
-    [attr.aria-expanded]="perfilAbierto ? 'true' : 'false'"
-  >
-    <div class="avatar online">
-      <div class="w-9 md:w-9 rounded-full">
-          <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center text-2xl font-bold">
-                {{ currentUser?.username?.charAt(0)?.toUpperCase() }}
-          </div>      </div>
-    </div>
-  </button>
-</aside>
+<!-- Espaciador (solo en desktop sidebar) -->
+<div class="spacer"></div>
+
+<!-- Ajustes (solo desktop) -->
+<button
+  class="menu-btn desktop-only"
+  aria-label="Ajustes">
+  <img src="icons/ajustes.png" class="menu-icon" alt="Ajustes">
+  <span class="menu-label">Ajustes</span>
+</button>
+
+<!-- Perfil / Avatar -->
+<button
+  class="menu-btn"
+  (click)="togglePerfil()"
+  aria-label="Perfil"
+  [attr.aria-expanded]="perfilAbierto">
+  <div class="avatar-circle">
+    {{ initial }}
+  </div>
+  <span class="menu-label">Perfil</span>
+</button>

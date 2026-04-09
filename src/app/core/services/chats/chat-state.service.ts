@@ -6,33 +6,45 @@ import { Subject } from 'rxjs';
   providedIn: 'root'
 })
 export class ChatStateService {
-  // Signal para saber qué chat está seleccionado actualmente
-  // Inicialmente es null porque no has seleccionado nada
+  /** Signal reactivo con el chat activo. null = ninguno seleccionado. */
   selectedChat = signal<ChatListItem | null>(null);
+
+  /** Observable que emite cada vez que se selecciona un chat (incluyendo null). */
+  private selectedChatSource = new Subject<ChatListItem | null>();
+  readonly selectedChat$ = this.selectedChatSource.asObservable();
+
   private refreshListSource = new Subject<void>();
-  refreshList$ = this.refreshListSource.asObservable();
-  // Mapa para guardar borradores: { chatId: "texto..." }
+  readonly refreshList$ = this.refreshListSource.asObservable();
+
   private drafts = new Map<number, string>();
 
-  setDraft(chatId: number, text: string) {
+  // ── Selección ─────────────────────────────────────────────────────────────
+
+  selectChat(chat: ChatListItem): void {
+    this.selectedChat.set(chat);
+    this.selectedChatSource.next(chat);
+  }
+
+  // ── Borrador ──────────────────────────────────────────────────────────────
+
+  setDraft(chatId: number, text: string): void {
     this.drafts.set(chatId, text);
   }
 
   getDraft(chatId: number): string {
-    return this.drafts.get(chatId) || '';
+    return this.drafts.get(chatId) ?? '';
   }
 
-  // Método para seleccionar un chat (Lo llamará tu ChatList)
-  selectChat(chat: ChatListItem) {
-    this.selectedChat.set(chat);
-  }
-  // Método para disparar la recarga
-  triggerRefresh() {
+  // ── Refresh ───────────────────────────────────────────────────────────────
+
+  triggerRefresh(): void {
     this.refreshListSource.next();
   }
 
-  // Método para limpiar (ej. al cerrar sesión)
-  clear() {
+  // ── Reset ─────────────────────────────────────────────────────────────────
+
+  clear(): void {
     this.selectedChat.set(null);
+    this.selectedChatSource.next(null);
   }
 }

@@ -1,69 +1,65 @@
-<div class="h-full bg-base-100 p-4 overflow-y-auto">
+<div class="h-full w-full bg-base-100 overflow-y-auto">
+  <div class="p-4 md:p-6 w-full max-w-3xl mx-auto">
 
-  <!-- Cabecera -->
-  <div class="mb-6 flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-base-content">Gestión de Contactos</h1>
-      <p class="text-sm text-base-content/60">Administra tus nuevas amistades</p>
+    <!-- Cabecera -->
+    <div class="mb-6 flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold text-base-content">Gestión de Contactos</h1>
+        <p class="text-xs md:text-sm text-base-content/60 mt-0.5">Administra tus solicitudes</p>
+      </div>
+      <div class="badge badge-primary badge-lg shrink-0">
+        {{ receivedRequests.length + sentRequests.length }}
+      </div>
     </div>
-    <div class="badge badge-primary badge-lg gap-2">
-      Total: {{ receivedRequests.length + sentRequests.length }}
-    </div>
-  </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+    <!-- Grid 1 col móvil / 2 col desktop -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
-    <!-- ── Solicitudes recibidas ──────────────────────────────────────── -->
-    <div class="card bg-base-200 shadow-xl min-h-[450px] flex flex-col">
-      <div class="card-body p-4 flex flex-col h-full">
+      <!-- ── Recibidas ───────────────────────────────────────────── -->
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body p-4 gap-3">
 
-        <h2 class="card-title text-lg flex justify-between shrink-0">
-          Recibidas
-          <div class="badge badge-secondary" *ngIf="receivedRequests.length > 0">
-            {{ receivedRequests.length }}
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-base">Recibidas</h2>
+            <div class="badge badge-secondary badge-sm" *ngIf="receivedRequests.length > 0">
+              {{ receivedRequests.length }}
+            </div>
           </div>
-        </h2>
-        <div class="divider my-0 shrink-0"></div>
-
-        <div class="flex-grow overflow-y-auto mt-4">
+          <div class="divider my-0"></div>
 
           <!-- Vacío -->
           <div *ngIf="receivedRequests.length === 0"
-               class="flex flex-col items-center justify-center h-full opacity-30">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2" fill="none"
+               class="flex flex-col items-center justify-center py-10 opacity-30 gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            <span class="text-lg font-medium">Bandeja limpia</span>
+            <span class="text-sm font-medium">Bandeja limpia</span>
           </div>
 
           <!-- Lista -->
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div *ngFor="let req of receivedRequests"
-                 class="flex items-center justify-between p-3 bg-base-100 rounded-lg shadow-sm">
+                 class="flex items-center gap-3 p-3 bg-base-100 rounded-xl">
 
-              <div class="flex items-center gap-3">
-                <!-- Avatar con inicial -->
-                <div class="w-10 h-10 rounded-full bg-primary text-primary-content
-                            flex items-center justify-center font-bold text-base
-                            ring-2 ring-primary ring-offset-2 ring-offset-base-100 flex-none">
-                  {{ req.otherDisplayName.charAt(0).toUpperCase() || '?' }}
-                </div>
-
-                <div>
-                  <p class="font-bold text-sm">{{ req.otherDisplayName }}</p>
-                  <p class="text-[10px] opacity-60 uppercase">
-                    {{ req.createdAt | date:'short' }}
-                  </p>
-                </div>
+              <!-- Avatar inicial -->
+              <div class="w-10 h-10 rounded-full bg-primary text-primary-content
+                          flex items-center justify-center font-bold text-base flex-none
+                          ring-2 ring-primary ring-offset-2 ring-offset-base-100">
+                {{ req.otherDisplayName.charAt(0).toUpperCase() || '?' }}
               </div>
 
-              <!-- Acciones -->
-              <div class="join">
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm truncate">{{ req.otherDisplayName }}</p>
+                <p class="text-[10px] opacity-60 uppercase">
+                  {{ req.createdAt | date:'dd/MM/yy · HH:mm' }}
+                </p>
+              </div>
+
+              <div class="join flex-none">
                 <button (click)="aceptar(req.id)"
-                        class="btn btn-sm btn-success join-item text-white"
-                        title="Aceptar">
+                        class="btn btn-sm btn-success join-item text-white" title="Aceptar">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                        viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -71,8 +67,7 @@
                   </svg>
                 </button>
                 <button (click)="rechazar(req.id)"
-                        class="btn btn-sm btn-error join-item text-white"
-                        title="Rechazar">
+                        class="btn btn-sm btn-error join-item text-white" title="Rechazar">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                        viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,51 +81,45 @@
 
         </div>
       </div>
-    </div>
 
-    <!-- ── Solicitudes enviadas ────────────────────────────────────────── -->
-    <div class="card bg-base-200 shadow-xl min-h-[450px] flex flex-col">
-      <div class="card-body p-4 flex flex-col h-full">
+      <!-- ── Enviadas ────────────────────────────────────────────── -->
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body p-4 gap-3">
 
-        <h2 class="card-title text-lg text-base-content/70 flex justify-between shrink-0">
-          Enviadas
-          <span class="text-xs font-normal opacity-50">{{ sentRequests.length }}</span>
-        </h2>
-        <div class="divider my-0 shrink-0"></div>
-
-        <div class="flex-grow overflow-y-auto mt-4">
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-base text-base-content/70">Enviadas</h2>
+            <span class="text-xs opacity-50">{{ sentRequests.length }}</span>
+          </div>
+          <div class="divider my-0"></div>
 
           <!-- Vacío -->
           <div *ngIf="sentRequests.length === 0"
-               class="flex flex-col items-center justify-center h-full opacity-30">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2" fill="none"
+               class="flex flex-col items-center justify-center py-10 opacity-30 gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            <span class="text-lg font-medium">Sin envíos</span>
+            <span class="text-sm font-medium">Sin envíos</span>
           </div>
 
           <!-- Lista -->
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div *ngFor="let req of sentRequests"
-                 class="flex items-center justify-between p-3 bg-base-100 rounded-lg border border-base-300">
+                 class="flex items-center gap-3 p-3 bg-base-100 rounded-xl border border-base-300">
 
-              <div class="flex items-center gap-3">
-                <!-- Avatar con inicial — neutral para "pendiente" -->
-                <div class="w-10 h-10 rounded-full bg-neutral text-neutral-content
-                            flex items-center justify-center font-bold text-base flex-none">
-                  {{ req.otherDisplayName.charAt(0).toUpperCase() || '?' }}
-                </div>
+              <div class="w-10 h-10 rounded-full bg-neutral text-neutral-content
+                          flex items-center justify-center font-bold text-base flex-none">
+                {{ req.otherDisplayName.charAt(0).toUpperCase() || '?' }}
+              </div>
 
-                <div>
-                  <p class="font-medium text-sm">{{ req.otherDisplayName }}</p>
-                  <div class="badge badge-ghost badge-xs mt-0.5">PENDIENTE</div>
-                </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm truncate">{{ req.otherDisplayName }}</p>
+                <div class="badge badge-ghost badge-xs mt-0.5">PENDIENTE</div>
               </div>
 
               <button (click)="rechazar(req.id)"
-                      class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                      class="btn btn-ghost btn-xs text-error hover:bg-error/10 flex-none">
                 Cancelar
               </button>
 
@@ -139,8 +128,7 @@
 
         </div>
       </div>
+
     </div>
-
   </div>
-
 </div>

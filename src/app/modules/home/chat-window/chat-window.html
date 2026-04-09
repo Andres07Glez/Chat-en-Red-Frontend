@@ -1,68 +1,83 @@
 <div class="flex flex-col h-full bg-base-100 relative">
 
-  <!-- ── Cabecera del chat ─────────────────────────────────────────────── -->
-  <div class="flex-none h-16 bg-base-200 flex items-center px-4 shadow-sm z-10 justify-between">
+  <!-- ── Cabecera ──────────────────────────────────────────────────────── -->
+  <div class="flex-none h-14 md:h-16 bg-base-200 flex items-center px-3 shadow-sm z-10 justify-between gap-2">
+
+    <!-- Botón volver (solo en móvil cuando showBackButton=true) -->
+    <button
+      *ngIf="showBackButton"
+      (click)="backClicked.emit()"
+      class="btn btn-ghost btn-circle btn-sm flex-none md:hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
 
     <!-- Info del chat -->
-    <div class="flex items-center gap-3 min-w-0">
+    <div class="flex items-center gap-2 flex-1 min-w-0">
       <div class="avatar placeholder flex-none">
-        <div class="bg-neutral text-neutral-content rounded-full w-10 flex items-center justify-center">
-          <span class="text-lg font-bold pb-1">{{ chatData.name.charAt(0).toUpperCase() }}</span>
+        <div class="bg-neutral text-neutral-content rounded-full w-9 h-9
+                    flex items-center justify-center font-bold text-base">
+          {{ chatData.name.charAt(0).toUpperCase() }}
         </div>
       </div>
       <div class="flex flex-col justify-center min-w-0">
-        <span class="font-bold text-base-content leading-tight truncate">{{ chatData.name }}</span>
+        <span class="font-bold text-base-content leading-tight truncate text-sm md:text-base">
+          {{ chatData.name }}
+        </span>
         <span class="text-xs text-base-content/60" *ngIf="chatData.isGroup">Grupo</span>
       </div>
     </div>
 
-    <!-- Botón seleccionar mensajes (normal) -->
-    <button *ngIf="!isSelectionMode"
-            (click)="enterSelectionMode()"
-            title="Seleccionar mensajes"
-            class="btn btn-ghost btn-circle btn-sm text-base-content flex-none">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-           viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    </button>
+    <!-- Acciones cabecera -->
+    <div class="flex items-center gap-1 flex-none">
 
-    <!-- Toolbar de selección -->
-    <div *ngIf="isSelectionMode" class="flex items-center gap-2 flex-none">
-      <span class="text-sm text-base-content/70 font-medium">
-        {{ selectedMessageCount > 0 ? selectedMessageCount + ' seleccionados' : 'Selecciona mensajes' }}
-      </span>
+      <!-- Modo selección activo -->
+      <ng-container *ngIf="isSelectionMode">
+        <span class="text-xs text-base-content/70 hidden sm:block">
+          {{ selectedMessageCount > 0 ? selectedMessageCount + ' sel.' : 'Selecciona' }}
+        </span>
 
-      <!-- Eliminar (solo propios) -->
-      <button
-        (click)="deleteSelectedMessages()"
-        [disabled]="selectedOwnCount === 0 || isDeletingMessages"
-        title="Eliminar seleccionados"
-        class="btn btn-error btn-sm gap-1.5 text-white disabled:opacity-40">
-        <span *ngIf="isDeletingMessages" class="loading loading-spinner loading-xs"></span>
-        <svg *ngIf="!isDeletingMessages" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        {{ isDeletingMessages ? 'Eliminando...' : 'Eliminar' }}
-      </button>
+        <button
+          (click)="deleteSelectedMessages()"
+          [disabled]="selectedOwnCount === 0 || isDeletingMessages"
+          class="btn btn-error btn-xs sm:btn-sm gap-1 text-white disabled:opacity-40">
+          <span *ngIf="isDeletingMessages" class="loading loading-spinner loading-xs"></span>
+          <svg *ngIf="!isDeletingMessages" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span class="hidden sm:inline">{{ isDeletingMessages ? '...' : 'Eliminar' }}</span>
+        </button>
 
-      <!-- Cancelar selección -->
-      <button (click)="exitSelectionMode()"
-              class="btn btn-ghost btn-circle btn-sm">
+        <button (click)="exitSelectionMode()" class="btn btn-ghost btn-circle btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </ng-container>
+
+      <!-- Botón entrar en modo selección (normal) -->
+      <button *ngIf="!isSelectionMode"
+              (click)="enterSelectionMode()"
+              title="Seleccionar mensajes"
+              class="btn btn-ghost btn-circle btn-sm text-base-content">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
       </button>
-    </div>
 
+    </div>
   </div>
 
   <!-- ── Área de mensajes ──────────────────────────────────────────────── -->
-  <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-base-100" #scrollContainer>
+  <div class="flex-1 overflow-y-auto p-3 md:p-4 custom-scrollbar bg-base-100" #scrollContainer>
 
     <div *ngIf="isLoading" class="flex justify-center mt-10">
       <span class="loading loading-spinner text-primary"></span>
@@ -73,7 +88,7 @@
       <!-- Separador de fecha -->
       <div *ngIf="shouldShowDateSeparator(messages[i-1] ?? null, msg)"
            class="w-full flex justify-center my-4">
-        <div class="badge badge-ghost text-xs font-semibold opacity-70 p-3">
+        <div class="badge badge-ghost text-xs font-semibold opacity-70 px-3 py-2">
           {{ formatDateSeparator(msg.sentAt) }}
         </div>
       </div>
@@ -84,11 +99,11 @@
            [class.opacity-60]="isSelectionMode && !selectedMessageIds.has(msg.id)"
            (click)="isSelectionMode ? toggleMessageSelection(msg, $event) : null">
 
-        <!-- Checkbox de selección (visible en modo selección) -->
+        <!-- Checkbox en modo selección -->
         <div *ngIf="isSelectionMode"
              class="chat-image cursor-pointer"
              (click)="toggleMessageSelection(msg, $event)">
-          <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+          <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
                [class.bg-primary]="selectedMessageIds.has(msg.id)"
                [class.border-primary]="selectedMessageIds.has(msg.id)"
                [class.border-base-content]="!selectedMessageIds.has(msg.id)">
@@ -99,26 +114,22 @@
           </div>
         </div>
 
-        <!-- Avatar grupo (solo cuando NO es modo selección) -->
+        <!-- Avatar grupo -->
         <div class="chat-image avatar" *ngIf="chatData.isGroup && !isSelectionMode">
-          <div class="w-10 rounded-full placeholder">
-            <div class="bg-neutral text-neutral-content rounded-full w-full h-full flex items-center justify-center">
-              <span class="font-bold text-sm">{{ msg.senderName.charAt(0).toUpperCase() }}</span>
+          <div class="w-8 md:w-10 rounded-full placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-full h-full
+                        flex items-center justify-center font-bold text-xs md:text-sm">
+              {{ msg.senderName.charAt(0).toUpperCase() }}
             </div>
           </div>
         </div>
 
-        <!-- Header del mensaje -->
-        <div class="chat-header">
-          <span class="font-bold mr-1 text-xs">{{ msg.senderName }}</span>
-          <time class="text-xs opacity-50">{{ formatTime(msg.sentAt) }}</time>
-          <!-- Indicador mensaje propio en modo selección -->
-          <span *ngIf="isSelectionMode && msg.isMine"
-                class="ml-1 text-[10px] text-base-content/40">(tuyo)</span>
+        <div class="chat-header text-xs">
+          <span class="font-semibold mr-1">{{ msg.senderName }}</span>
+          <time class="opacity-50">{{ formatTime(msg.sentAt) }}</time>
         </div>
 
-        <!-- Burbuja del mensaje -->
-        <div class="chat-bubble"
+        <div class="chat-bubble text-sm md:text-base max-w-[80vw] md:max-w-[65%] break-words"
              [ngClass]="msg.isMine
                ? 'chat-bubble-primary text-primary-content'
                : 'chat-bubble-secondary text-secondary-content'"
@@ -138,38 +149,46 @@
     </ng-container>
   </div>
 
-  <!-- ── Input de mensaje ──────────────────────────────────────────────── -->
-  <div class="flex-none p-3 bg-base-200 flex gap-2 items-end"
+  <!-- ── Barra de input ────────────────────────────────────────────────── -->
+  <div class="flex-none p-2 md:p-3 bg-base-200 flex gap-2 items-end
+              border-t border-base-300"
        [class.opacity-50]="isSelectionMode"
        [class.pointer-events-none]="isSelectionMode">
-    <button class="btn btn-ghost btn-circle text-base-content/60">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+
+    <!-- Adjunto (pendiente) -->
+    <button class="btn btn-ghost btn-circle btn-sm text-base-content/60 flex-none self-end mb-0.5">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
            viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
       </svg>
     </button>
 
+    <!-- Textarea responsive -->
     <textarea
       [(ngModel)]="newMessageText"
       (keydown)="onKeyDown($event)"
       (input)="onInputText()"
       [disabled]="isSending || isSelectionMode"
-      class="textarea textarea-bordered w-full resize-none bg-base-100 focus:border-primary custom-scrollbar"
-      [placeholder]="isSelectionMode ? 'Modo selección activo...' : 'Escribe un mensaje...'"
-      rows="1">
+      class="textarea textarea-bordered flex-1 min-w-0 resize-none bg-base-100
+             focus:border-primary custom-scrollbar text-sm leading-relaxed"
+      [placeholder]="isSelectionMode ? 'Modo selección...' : 'Escribe un mensaje...'"
+      rows="1"
+      style="max-height: 120px; overflow-y: auto;">
     </textarea>
 
-    <button class="btn btn-primary btn-circle"
+    <!-- Enviar -->
+    <button class="btn btn-primary btn-circle btn-sm md:btn-md flex-none self-end"
             (click)="sendMessage()"
             [disabled]="!newMessageText.trim() || isSending || isSelectionMode">
       <span *ngIf="isSending" class="loading loading-spinner loading-xs"></span>
-      <svg *ngIf="!isSending" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90"
+      <svg *ngIf="!isSending" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 rotate-90"
            fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
       </svg>
     </button>
+
   </div>
 
 </div>

@@ -8,6 +8,7 @@ import { ChatWindow } from "../chat-window/chat-window";
 import { WebsocketService } from '../../../core/services/webSocket/websocket.service';
 import { UserRequestsComponent } from '../user-requests/user-requests';
 import { ContactsViewComponent } from "../contacts/contacts-view/contacts-view";
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-main-layout',
@@ -22,41 +23,49 @@ export class MainLayout implements OnInit, OnDestroy {
 
   // En lugar de booleano, usamos el estado de la vista. Default: 'chats'
   activeView: 'chats' | 'profile' | 'requests' |'contacts' = 'chats';
+  showChatPanel = false;
+  private chatSub: Subscription | null = null;
 
-  // Lógica para el perfil (viene del toggle)
-  handleProfileToggle(isOpen: boolean) {
-    if (isOpen) {
-      this.activeView = 'profile';
-    } else {
-      // Si cierran el perfil, volvemos a chats
-      this.activeView = 'chats';
-    }
-  }
 
-  // Click en icono de Chats
-  openChatList() {
-    this.activeView = 'chats';
-  }
+  // ── Ciclo de vida ──────────────────────────────────────────────────────
 
-  // Click en icono de Solicitudes (NUEVO)
-  openRequests() {
-    this.activeView = 'requests';
-    console.log("Abriendo vista de solicitudes...");
-  }
-  // Click en icono de Solicitudes (NUEVO)
-  openContacts() {
-    this.activeView = 'contacts';
-    console.log("Abriendo vista de contactos...");
-  }
-
-  ngOnInit() {
-    // Iniciamos la conexión al cargar el layout principal
+  ngOnInit(): void {
     this.wsService.connect();
+
+    // En móvil: al seleccionar un chat, mostrar automáticamente la ventana
+    this.chatSub = this.chatState.selectedChat$.subscribe(chat => {
+      if (chat) this.showChatPanel = true;
+    });
   }
 
-  ngOnDestroy() {
-    // Cerramos conexión si sale del layout (logout)
+  ngOnDestroy(): void {
     this.wsService.disconnect();
+    this.chatSub?.unsubscribe();
+  }
+
+  // ── Navegación de vistas ───────────────────────────────────────────────
+
+  handleProfileToggle(isOpen: boolean): void {
+    this.activeView = isOpen ? 'profile' : 'chats';
+  }
+
+  openChatList(): void {
+    this.activeView   = 'chats';
+    this.showChatPanel = false;
+  }
+
+  openRequests(): void {
+    this.activeView   = 'requests';
+    this.showChatPanel = false;
+  }
+
+  openContacts(): void {
+    this.activeView   = 'contacts';
+    this.showChatPanel = false;
+  }
+
+  goBackToList(): void {
+    this.showChatPanel = false;
   }
 
 }

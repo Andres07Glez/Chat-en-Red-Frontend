@@ -1,9 +1,9 @@
-import { Component, EventEmitter, HostListener, inject, Output} from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, Output} from '@angular/core';
 import { AuthService } from '../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-menu-bar',
-  //standalone: true,
+  standalone: true,
   imports: [],
   templateUrl: './menu-bar.html',
   styleUrls: ['./menu-bar.css']
@@ -32,5 +32,8 @@ export class menubar {
   cerrarPerfil(): void {
     this.perfilAbierto = false;
     this.perfilToggled.emit(false);
+  }
+  get initial(): string {
+    return this.currentUser?.username?.charAt(0)?.toUpperCase() ?? '?';
   }
 }

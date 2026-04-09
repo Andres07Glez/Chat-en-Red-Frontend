@@ -1,56 +1,111 @@
-<div class="flex h-screen w-full overflow-hidden bg-base-100">
+<!--
+  Layout responsive:
+  • Móvil (<md):   app-menu-bar se muestra como bottom nav fijo abajo.
+                   Un panel a la vez: lista O ventana de chat.
+  • Tablet (md+):  app-menu-bar se convierte en sidebar vertical izquierdo.
+                   Lista y ventana de chat visibles simultáneamente.
+-->
+<div class="flex h-screen w-full overflow-hidden bg-base-100 flex-col md:flex-row">
 
-<aside class="w-[70px] flex-none z-20 shadow-lg">
-        <app-menu-bar
-            (perfilToggled)="handleProfileToggle($event)"
-            (onChatsClick)="openChatList()"
-            (onRequestsClick)="openRequests()"
-            (onContactsClick)="openContacts()">
-        </app-menu-bar>
-    </aside>
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SIDEBAR (md+): app-menu-bar se renderiza UNA SOLA VEZ.
+       En móvil su :host es una fila; en desktop es una columna.
+       Lo ponemos como aside con tamaño fijo en desktop, auto en móvil.
+       ══════════════════════════════════════════════════════════════════════ -->
 
+  <!-- En desktop: barra lateral izquierda de 64px -->
+  <!-- En móvil:   bottom nav fijo, se posiciona con CSS abajo -->
+  <aside class="
+    order-last md:order-first
+    fixed bottom-0 left-0 right-0 z-30
+    md:static md:z-auto
+    h-16 md:h-auto md:w-16
+    border-t border-base-300 md:border-t-0
+    shadow-[0_-2px_12px_rgba(0,0,0,0.1)] md:shadow-none
+    bg-base-100
+  ">
+    <app-menu-bar
+      (perfilToggled)="handleProfileToggle($event)"
+      (onChatsClick)="openChatList()"
+      (onRequestsClick)="openRequests()"
+      (onContactsClick)="openContacts()">
+    </app-menu-bar>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ÁREA DE CONTENIDO (todo menos el sidebar)
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="flex flex-1 min-w-0 overflow-hidden mb-16 md:mb-0">
+
+    <!-- ── Panel izquierdo: lista / perfil / contactos ─────────────────── -->
+    <!-- Visible solo cuando activeView != 'requests' -->
     <aside
-        *ngIf="activeView !== 'requests'"
-        class="w-[350px] flex-none border-r border-base-300 flex flex-col transition-all duration-300">
+      *ngIf="activeView !== 'requests'"
+      class="flex flex-col flex-none border-r border-base-300 transition-all duration-200
+             w-full md:w-[300px] lg:w-[340px]"
+      [class.hidden]="showChatPanel"
+      [class.md:flex]="!activeView.includes('requests')">
 
-        <app-chat-list
-            *ngIf="activeView === 'chats'"
-            class="h-full">
-        </app-chat-list>
+      <app-chat-list
+        *ngIf="activeView === 'chats'"
+        class="h-full block">
+      </app-chat-list>
 
-        <app-profile-sidebar
-            *ngIf="activeView === 'profile'"
-            (closeProfile)="openChatList()"
-            class="h-full">
-        </app-profile-sidebar>
-        <app-contacts-view
-         *ngIf="activeView === 'contacts'"
-         (closeProfile)="openChatList()">
-        </app-contacts-view>
+      <app-profile-sidebar
+        *ngIf="activeView === 'profile'"
+        (closeProfile)="openChatList()"
+        class="h-full block">
+      </app-profile-sidebar>
+
+      <app-contacts-view
+        *ngIf="activeView === 'contacts'"
+        (closeProfile)="openChatList()"
+        class="h-full block">
+      </app-contacts-view>
 
     </aside>
 
-    <main class="flex-1 relative flex flex-col min-w-0 bg-base-100">
+    <!-- ── Panel principal ────────────────────────────────────────────── -->
+    <main class="flex-1 relative flex flex-col min-w-0 bg-base-100 overflow-hidden">
 
-        <app-user-requests
-            *ngIf="activeView === 'requests'"
-            class="h-full w-full block">
-        </app-user-requests>
+      <!-- Vista de solicitudes (ocupa TODO el ancho del main) -->
+      <app-user-requests
+        *ngIf="activeView === 'requests'"
+        class="flex-1 h-full w-full block overflow-y-auto">
+      </app-user-requests>
 
-        <ng-container *ngIf="activeView !== 'requests'">
+      <ng-container *ngIf="activeView !== 'requests'">
 
-            <ng-container *ngIf="chatState.selectedChat() as chat">
-                    <app-chat-window [chatData]="chat" class="h-full block"></app-chat-window>
-            </ng-container>
-
-            <div *ngIf="!chatState.selectedChat()" class="flex h-full items-center justify-center text-base-content/50 flex-col gap-4">
-                <img src="" class="w-1/3 opacity-50" alt=""> <p class="text-lg font-medium">Selecciona un chat para comenzar</p>
-            </div>
-
+        <!-- Chat seleccionado -->
+        <ng-container *ngIf="chatState.selectedChat() as chat">
+          <!-- En móvil solo visible cuando showChatPanel=true -->
+          <app-chat-window
+            [chatData]="chat"
+            [showBackButton]="true"
+            (backClicked)="goBackToList()"
+            class="h-full block"
+            [class.hidden]="!showChatPanel"
+            [class.md:block]="true">
+          </app-chat-window>
         </ng-container>
 
+        <!-- Ningún chat seleccionado — placeholder desktop -->
+        <div
+          *ngIf="!chatState.selectedChat()"
+          class="hidden md:flex h-full items-center justify-center
+                 text-base-content/40 flex-col gap-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 opacity-20" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8
+                     a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72
+                     C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <p class="text-base font-medium">Selecciona un chat para comenzar</p>
+        </div>
+
+      </ng-container>
     </main>
 
+  </div>
 </div>
-
-
